@@ -1,0 +1,136 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] WebAssembly build fixes for lib_ui
+
+- QAccessible::Attribute::Orientation guarded for Qt < 6.10 (dev-host).
+- emoji_config: sprite-cache SHA-256 via QCryptographicHash (no OpenSSL).
+- delayed_activation: XCB focus dance excluded (no X11 in a browser).
+- spoiler_mess: default masks generated inline under Emscripten -
+  waiting on work queued behind the wait on the only thread would
+  deadlock.
+---
+diff --git a/ui/accessible/ui_accessible_widget.cpp b/ui/accessible/ui_accessible_widget.cpp
+index aa538f7..7e09ad4 100644
+--- a/ui/accessible/ui_accessible_widget.cpp
++++ b/ui/accessible/ui_accessible_widget.cpp
+@@ -360,13 +360,16 @@ bool Widget::clear() {
+ 
+ QList<QAccessible::Attribute> Widget::attributeKeys() const {
+ 	auto result = QList<QAccessible::Attribute>();
++#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)
+ 	if (rp()->accessibilityOrientation().has_value()) {
+ 		result.append(QAccessible::Attribute::Orientation);
+ 	}
++#endif // Qt >= 6.10
+ 	return result;
+ }
+ 
+ QVariant Widget::attributeValue(QAccessible::Attribute key) const {
++#if QT_VERSION >= QT_VERSION_CHECK(6, 10, 0)
+ 	if (key == QAccessible::Attribute::Orientation) {
+ 		if (const auto orientation = rp()->accessibilityOrientation()) {
+ 			// Plain int by design: the UIA bridge reads this back with
+@@ -375,6 +378,7 @@ QVariant Widget::attributeValue(QAccessible::Attribute key) const {
+ 			return int(*orientation);
+ 		}
+ 	}
++#endif // Qt >= 6.10
+ 	return QVariant();
+ }
+ 
+diff --git a/ui/delayed_activation.cpp b/ui/delayed_activation.cpp
+index 32e6c35..3524887 100644
+--- a/ui/delayed_activation.cpp
++++ b/ui/delayed_activation.cpp
+@@ -11,7 +11,7 @@
+ #include "base/invoke_queued.h"
+ #include "base/platform/base_platform_info.h"
+ 
+-#if !defined Q_OS_WIN && !defined Q_OS_MAC
++#if !defined Q_OS_WIN && !defined Q_OS_MAC && !defined __EMSCRIPTEN__
+ #include "base/platform/linux/base_linux_xcb_utilities.h"
+ #endif // !Q_OS_WIN && !Q_OS_MAC
+ 
+@@ -53,7 +53,7 @@ void ActivateWindowDelayed(not_null<QWidget*> widget) {
+ 	} else if (std::exchange(Window, widget.get())) {
+ 		return;
+ 	}
+-#if !defined Q_OS_WIN && !defined Q_OS_MAC
++#if !defined Q_OS_WIN && !defined Q_OS_MAC && !defined __EMSCRIPTEN__
+ 	const auto focusAncestor = [&] {
+ 		const auto focusWidget = QApplication::focusWidget();
+ 		if (!focusWidget || !widget->window()) {
+@@ -73,7 +73,7 @@ void ActivateWindowDelayed(not_null<QWidget*> widget) {
+ 		}
+ 		window->raise();
+ 		window->activateWindow();
+-#if !defined Q_OS_WIN && !defined Q_OS_MAC
++#if !defined Q_OS_WIN && !defined Q_OS_MAC && !defined __EMSCRIPTEN__
+ 		if (::Platform::IsX11() && focusAncestor) {
+ 			using namespace base::Platform::XCB::Library;
+ 			static const auto xcb_set_input_focus_checked = LoadSymbol<
+diff --git a/ui/effects/spoiler_mess.cpp b/ui/effects/spoiler_mess.cpp
+index d4413de..2029f39 100644
+--- a/ui/effects/spoiler_mess.cpp
++++ b/ui/effects/spoiler_mess.cpp
+@@ -257,7 +257,7 @@ void PrepareDefaultSpoiler(
+ 		return;
+ 	}
+ 	const auto name = QString::fromUtf8(nameFactory);
+-	crl::async([=, &spoiler] {
++	const auto prepare = [=, &spoiler] {
+ 		const auto descriptor = descriptorFactory();
+ 		auto cached = ReadDefaultMask(name, SpoilerMessCached::Validator{
+ 			.frameDuration = descriptor.frameDuration,
+@@ -274,7 +274,15 @@ void PrepareDefaultSpoiler(
+ 		if (!cached) {
+ 			WriteDefaultMask(name, *spoiler.cached);
+ 		}
+-	});
++	};
++#ifdef __EMSCRIPTEN__
++	// Single-threaded WebAssembly: WaitDefaultSpoiler on the main thread
++	// would deadlock waiting for work queued behind it on the same thread,
++	// so the mask is generated inline.
++	prepare();
++#else // __EMSCRIPTEN__
++	crl::async(prepare);
++#endif // __EMSCRIPTEN__
+ }
+ 
+ [[nodiscard]] const SpoilerMessCached &WaitDefaultSpoiler(
+diff --git a/ui/emoji_config.cpp b/ui/emoji_config.cpp
+index f92235f..805619f 100644
+--- a/ui/emoji_config.cpp
++++ b/ui/emoji_config.cpp
+@@ -9,7 +9,31 @@
+ #include "ui/widgets/fields/input_field.h"
+ #include "emoji_suggestions_helper.h"
+ #include "base/bytes.h"
++#ifdef __EMSCRIPTEN__
++// WebAssembly builds carry no OpenSSL; the sprite-cache signature only
++// needs SHA-256, which Qt provides. Same digest, same cache format.
++#include <QtCore/QCryptographicHash>
++namespace openssl {
++
++inline constexpr auto kSha256Size = std::size_t(32);
++
++template <typename ...Args>
++[[nodiscard]] inline bytes::vector Sha256(Args &&...args) {
++	auto hash = QCryptographicHash(QCryptographicHash::Sha256);
++	(hash.addData(QByteArrayView(
++		reinterpret_cast<const char*>(args.data()),
++		args.size())), ...);
++	const auto result = hash.result();
++	auto bytes = bytes::vector(kSha256Size);
++	Assert(result.size() == int(kSha256Size));
++	memcpy(bytes.data(), result.constData(), kSha256Size);
++	return bytes;
++}
++
++} // namespace openssl
++#else // __EMSCRIPTEN__
+ #include "base/openssl_help.h"
++#endif // __EMSCRIPTEN__
+ #include "base/parse_helper.h"
+ #include "base/debug_log.h"
+ #include "ui/style/style_core.h"

@@ -1,0 +1,47 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] Queue async work on the main event loop under Emscripten
+
+Single-threaded WebAssembly has no QThreadPool; crl's Qt backend
+dispatches via QMetaObject::invokeMethod on the application instance,
+so queue ordering semantics hold and nothing races.
+---
+diff --git a/crl/qt/crl_qt_async.h b/crl/qt/crl_qt_async.h
+index 67d94eb..95955f8 100644
+--- a/crl/qt/crl_qt_async.h
++++ b/crl/qt/crl_qt_async.h
+@@ -14,6 +14,26 @@
+ #include <crl/common/crl_common_sync.h>
+ #include <type_traits>
+ 
++#ifdef __EMSCRIPTEN__
++
++#include <QtCore/QCoreApplication>
++#include <QtCore/QMetaObject>
++
++namespace crl::details {
++
++// Single-threaded WebAssembly has no QThreadPool: "background" work is
++// queued onto the (only) event loop, so queue ordering semantics hold and
++// nothing ever races.
++template <typename Callable>
++inline void async_any(Callable &&callable) {
++	QMetaObject::invokeMethod(
++		QCoreApplication::instance(),
++		std::forward<Callable>(callable),
++		Qt::QueuedConnection);
++}
++
++#else // __EMSCRIPTEN__
++
+ #include <QtCore/QThreadPool>
+ 
+ namespace crl::details {
+@@ -50,6 +70,8 @@ inline void async_any(Callable &&callable) {
+ 	}
+ }
+ 
++#endif // !__EMSCRIPTEN__
++
+ inline void async_plain(void (*callable)(void*), void *argument) {
+ 	async_any([=] {
+ 		callable(argument);

@@ -25,6 +25,7 @@ target_sources(ttr_core PRIVATE
     ${ttr_dir}/core/sessionless_media_runtime.cpp
     ${ttr_dir}/core/sessionless_media_runtime.h
     ${ttr_dir}/core/version.h
+    ${ttr_dir}/core/wasm_platform_stubs.cpp
 )
 
 target_include_directories(ttr_core PUBLIC
@@ -69,18 +70,35 @@ set(ttr_host_link_options -Wl,--unresolved-symbols=ignore-all)
 
 if (EMSCRIPTEN)
     add_executable(ttr_wasm_host ${ttr_dir}/wasm-host/ttr_abi.cpp
-        ${ttr_dir}/wasm-host/ttr_abi.h)
+        ${ttr_dir}/wasm-host/ttr_abi.h
+        ${ttr_dir}/wasm-host/ttr_embind_bootstrap.cpp)
+    set_source_files_properties(${ttr_dir}/wasm-host/ttr_embind_bootstrap.cpp
+        PROPERTIES SKIP_PRECOMPILE_HEADERS TRUE)
     init_target(ttr_wasm_host)
     target_link_libraries(ttr_wasm_host PRIVATE ${ttr_link_closure})
+
+
+    target_precompile_headers(ttr_wasm_host PRIVATE
+        ${ttr_dir}/core/ttr_pch.h)
     target_link_options(ttr_wasm_host PRIVATE
         -sMODULARIZE=1
         -sEXPORT_ES6=1
         -sEXPORT_NAME=createTtrModule
         -sALLOW_MEMORY_GROWTH=1
-        -sEXPORTED_RUNTIME_METHODS=cwrap,UTF8ToString
-        -sEXPORTED_FUNCTIONS=_malloc,_free
+        -sWASM_BIGINT=1
+        # Qt's wasm finalizer appends its own EXPORTED_RUNTIME_METHODS,
+        # and the last -s wins; QT_WASM_EXTRA_EXPORTED_METHODS is the
+        # supported way to add ours to Qt's list.
+        -sEXPORTED_FUNCTIONS=_main,_malloc,_free,__embind_initialize_bindings
+        # Same strategy as the native harness's ignore-unresolved link:
+        # app-only editor/box symbols resolve to traps; the smoke render is
+        # the tripwire. Symbols the render path needs are defined for real
+        # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp).
+        --profiling-funcs
     )
-    set_target_properties(ttr_wasm_host PROPERTIES OUTPUT_NAME ttr-renderer)
+    set_target_properties(ttr_wasm_host PROPERTIES
+        OUTPUT_NAME ttr-renderer
+        QT_WASM_EXTRA_EXPORTED_METHODS "cwrap,UTF8ToString,HEAPU8")
 else()
     add_executable(ttr_native_host ${ttr_dir}/native-host/main.cpp)
     init_target(ttr_native_host)

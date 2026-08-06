@@ -1,11 +1,12 @@
 From: telegram.tools rich-message renderer
-Subject: [PATCH] RandomFill via getentropy under Emscripten
+Subject: [PATCH] RandomFill/RandomAddSeed without OpenSSL under Emscripten
 
-WebAssembly builds carry no OpenSSL; Emscripten's getentropy is backed
-by the browser's crypto.getRandomValues (256-byte chunks).
+WebAssembly builds carry no OpenSSL; getentropy is backed by the
+browser's crypto.getRandomValues (256-byte chunks), which neither needs
+nor accepts external seeding.
 ---
 diff --git a/base/random.cpp b/base/random.cpp
-index c32f8a3..62bb548 100644
+index c32f8a3..de40bf9 100644
 --- a/base/random.cpp
 +++ b/base/random.cpp
 @@ -6,9 +6,13 @@
@@ -47,3 +48,14 @@ index c32f8a3..62bb548 100644
  }
  
  int RandomIndex(int count) {
+@@ -48,7 +65,10 @@ int RandomIndex(int count, BufferedRandom<uint32> buffered) {
+ }
+ 
+ void RandomAddSeed(bytes::const_span bytes) {
++#ifndef __EMSCRIPTEN__
++	// The browser's CSPRNG neither needs nor accepts external seeding.
+ 	RAND_seed(bytes.data(), bytes.size());
++#endif // !__EMSCRIPTEN__
+ }
+ 
+ } // namespace base

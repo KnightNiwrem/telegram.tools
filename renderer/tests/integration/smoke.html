@@ -1,0 +1,85 @@
+<!doctype html>
+<!-- Part of the telegram.tools rich-message renderer (GPL-3.0).
+     Phase 3 smoke test: one hard-coded paragraph fixture rendered by the
+     TDesktop-derived WASM artifact and blitted to a canvas. Serve the
+     build output next to this file (scripts/serve-smoke.sh). -->
+<html>
+<head><meta charset="utf-8"><title>ttr smoke</title></head>
+<body>
+<canvas id="out" style="border:1px solid #999"></canvas>
+<pre id="log"></pre>
+<script type="module">
+Error.stackTraceLimit = 200;
+const log = (line) => {
+  document.getElementById("log").textContent += line + "\n";
+  console.log("[smoke]", line);
+};
+try {
+  const { default: createTtrModule } = await import("./ttr-renderer.js");
+  log("glue loaded");
+  const module = await createTtrModule({
+    locateFile: (path) => path,
+    // QTBUG-131279: libembind's builtin registrations must run before
+    // Qt's static constructors, which use embind for int64 values.
+    noInitialRun: true,
+  });
+  log("module instantiated");
+  const abi = {
+    abiVersion: module.cwrap("ttr_abi_version", "number", []),
+    initialize: module.cwrap("ttr_initialize", "number", []),
+    version: module.cwrap("ttr_version", "string", []),
+    create: module.cwrap("ttr_create", "number", []),
+    render: module.cwrap("ttr_render", "number", ["number", "string"]),
+  };
+  log("abi version: " + abi.abiVersion());
+  log("init: " + abi.initialize());
+  log("version: " + abi.version());
+  const handle = abi.create();
+  log("handle: " + handle);
+  const request = {
+    schemaVersion: 1,
+    content: {
+      mode: "blocks",
+      richMessage: {
+        schemaVersion: 1,
+        blocks: [{
+          kind: "paragraph",
+          text: { text: "Hello from Telegram Desktop inside your browser." },
+        }],
+      },
+    },
+    viewportWidth: 480,
+    theme: "light",
+    scale: 1,
+  };
+  const resultPointer = abi.render(handle, JSON.stringify(request));
+  const result = JSON.parse(module.UTF8ToString(resultPointer));
+  log("render status: " + result.status + " " + result.width + "x" + result.height);
+  log("diagnostics: " + JSON.stringify(result.diagnostics));
+  if (result.status === "ok") {
+    const pixels = module.HEAPU8.slice(
+      result.pixelsOffset,
+      result.pixelsOffset + result.pixelsSize,
+    );
+    const canvas = document.getElementById("out");
+    canvas.width = result.width;
+    canvas.height = result.height;
+    canvas.getContext("2d").putImageData(
+      new ImageData(
+        new Uint8ClampedArray(pixels.buffer, 0, result.pixelsSize),
+        result.width,
+        result.height,
+      ),
+      0,
+      0,
+    );
+    log("SMOKE-OK");
+  } else {
+    log("SMOKE-FAILED");
+  }
+} catch (error) {
+  log("SMOKE-CRASHED: " + (error?.stack ?? error));
+}
+</script>
+</body>
+</html>

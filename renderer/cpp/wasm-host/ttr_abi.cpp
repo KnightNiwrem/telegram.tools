@@ -17,6 +17,13 @@ exception, see renderer/LICENSE).
 #include <memory>
 #include <string>
 
+#if defined(__EMSCRIPTEN__)
+namespace Ttr {
+void RegisterEmbindPrimitives();
+} // namespace Ttr
+#endif // __EMSCRIPTEN__
+
+
 namespace {
 
 struct RendererContext {
@@ -55,6 +62,13 @@ RendererContext *Lookup(int handle) {
 
 } // namespace
 
+// Qt's wasm target finalization links with INVOKE_RUN=0 and has the page
+// loader call main explicitly; the renderer is driven purely through the
+// ttr_* ABI, so main only has to exist and keep the runtime alive.
+int main(int argc, char *argv[]) {
+	return 0;
+}
+
 extern "C" {
 
 int ttr_abi_version(void) {
@@ -67,9 +81,11 @@ int ttr_initialize(void) {
 		return state->initResult;
 	}
 	state->initialized = true;
-#if !defined(__EMSCRIPTEN__)
+#if defined(__EMSCRIPTEN__)
+	Ttr::RegisterEmbindPrimitives();
+#else // __EMSCRIPTEN__
 	qputenv("QT_QPA_PLATFORM", "offscreen");
-#endif
+#endif // !__EMSCRIPTEN__
 	state->app = std::make_unique<Ttr::HarnessApp>(FakeArgc, FakeArgv);
 	state->app->installNativeEventFilter(state->app.get());
 	state->baseIntegration = std::make_unique<Ttr::HarnessBaseIntegration>(

@@ -200,6 +200,7 @@ ttr_impostor(external_kcoreaddons
     ${third_party_loc}/kcoreaddons/src/lib/io
     ${third_party_loc}/kcoreaddons/src/lib/util
     ${cmake_helpers_loc}/external/kcoreaddons/headers/public)
+target_compile_definitions(external_kcoreaddons INTERFACE KCOREADDONS_EXPORT=)
 ttr_impostor(external_webrtc)
 ttr_impostor(external_rlottie)
 
