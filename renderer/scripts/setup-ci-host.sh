@@ -45,6 +45,7 @@ if [[ "${TTR_SKIP_APT:-0}" != "1" ]]; then
         libboost-dev libboost-regex-dev libboost-program-options-dev \
         libjpeg-dev libwebp-dev libpng-dev libtiff-dev liblzma-dev \
         webp \
+        libudev-dev \
         libhunspell-dev libgtk-3-dev libgirepository1.0-dev libepoxy-dev \
         libglibmm-2.68-dev libfontconfig-dev \
         libxcb1-dev libxcb-keysyms1-dev libxcb-record0-dev \
