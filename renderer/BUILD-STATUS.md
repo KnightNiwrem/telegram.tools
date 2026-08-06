@@ -82,11 +82,17 @@ full-corpus golden capture is the tripwire, and it passes clean.
   build), ASan/UBSan runs, and pinned-Qt container goldens. The harness
   renders and its goldens are recorded, but they are not yet certified
   against the reference client.
-- **Phase 3 — Qt/WASM build**: requires emsdk + Qt-for-WebAssembly and a
-  cross-compiled subset of the desktop-app externals (notably microtex,
-  cmark-gfm, prisma for WASM; OpenSSL/ffmpeg-dependent parts of lib_ui
-  need pruning or WASM ports). `scripts/build-wasm.sh` encodes the
-  intended invocation; it has not succeeded yet.
+- **Phase 3 — Qt/WASM build**: probed on 2026-08-06 with emsdk (latest)
+  and Qt 6.9.2 `wasm_singlethread` (aqtinstall). `emcmake cmake` on the
+  pinned tree fails immediately at `cmake/options.cmake:25` — **"Unknown
+  platform type"**: desktop-app's cmake layer has no Emscripten platform
+  branch, so no source compiles until the platform detection, per-platform
+  external-dependency selection (openssl/ffmpeg/glib have no WASM story;
+  microtex/cmark-gfm/prisma should cross-compile), and Qt-wasm glue are
+  ported. This confirms the plan's framing of Phase 3 as its own
+  retire-the-risk effort; the sessionless C++ core itself is
+  toolchain-agnostic and `scripts/build-wasm.sh` encodes the intended
+  invocation. The escalation path in plan Phase 3 applies unchanged.
 - **Phase 5** block-family fidelity matrix (needs goldens).
 - **Phase 7** HTML/Markdown import inside the renderer: the sessionless
   seam below `BlocksFromHtmlSource` (`TextUtilities::BlocksFromHtml` +
@@ -101,6 +107,9 @@ full-corpus golden capture is the tripwire, and it passes clean.
   embedded night-palette loading is wired.
 - **Phases 9, 10, 12, 13, 14** as described in the plan.
 
-## Latest build attempt
+## Determinism check
 
-(Appended by hand after each significant attempt.)
+`scripts/verify-goldens.sh` re-renders every golden and compares
+byte-for-byte (`scripts/compare-renders.py`): **213/213 identical** on
+recapture in the same environment (plan Phase 1 verification: "repeating
+the native capture in the same environment produces identical images").
