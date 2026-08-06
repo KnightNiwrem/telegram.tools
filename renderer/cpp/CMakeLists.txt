@@ -98,6 +98,13 @@ if (EMSCRIPTEN)
     set_target_properties(ttr_wasm_host PROPERTIES
         OUTPUT_NAME ttr-renderer
         QT_WASM_EXTRA_EXPORTED_METHODS "cwrap,UTF8ToString,HEAPU8")
+
+    # Emoji sprites, re-encoded as PNG by emoji_png.cmake because Qt-wasm
+    # has no WebP plugin; without them Ui::Emoji::Init() aborts on an
+    # empty sprite list.
+    target_sources(ttr_wasm_host PRIVATE ${ttr_emoji_qrc})
+    add_dependencies(ttr_wasm_host ttr_emoji_png)
+    target_prepare_qrc(ttr_wasm_host)
 else()
     add_executable(ttr_native_host ${ttr_dir}/native-host/main.cpp)
     init_target(ttr_native_host)

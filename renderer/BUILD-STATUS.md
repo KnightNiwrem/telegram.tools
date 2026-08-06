@@ -83,8 +83,9 @@ full-corpus golden capture is the tripwire, and it passes clean.
   build), ASan/UBSan runs, and pinned-Qt container goldens. The harness
   renders and its goldens are recorded, but they are not yet certified
   against the reference client.
-- **Phase 3 remainder**: pixel-level fidelity (below), binary-size work
-  (25 MB raw / 10.2 MB gzipped), Firefox and WebKit runs, and the
+- **Phase 3 remainder**: pixel-level fidelity (below), the one pullquote
+  spacing difference, binary-size work (34.5 MB raw / ~13 MB gzipped;
+  the emoji sprites are a large share), Firefox and WebKit runs, and the
   performance measurements the plan asks for (cold init, warm render,
   memory high-water).
 - **Phase 5** block-family fidelity matrix (needs goldens).
@@ -109,13 +110,25 @@ Chrome and compares against the committed native goldens:
 - **Geometry: 212 of 213 identical.** Same widths, heights, and therefore
   the same line breaking and block layout as the native harness. The one
   exception is `block-pullquote-credit` at 320px (native 320×70, WASM
-  320×55) — an open item, not yet diagnosed.
+  320×55). Narrowed down: both render the same content with the same line
+  wrapping (quote on two lines, credit on one); the 15px is vertical
+  spacing around the credit. Still open.
 - **Pixels: 177 of 213 differ.** These are font-rasterization differences
   between Qt-wasm's bundled FreeType and the host's, which plan §3 and
   Phase 9 classify as a raster-only difference class. They are *not*
   waived: no pixel threshold is configured, the comparison reports every
   difference, and establishing the tolerance requires the pinned-Qt
   reference profile that is still outstanding.
+
+### WebP emoji sprites
+
+Qt for WebAssembly ships no WebP image plugin, so TDesktop's
+`Resources/emoji/emoji_N.webp` sprites decoded to null images and
+`Ui::Emoji::Init()` aborted on an empty sprite list (visible only as a
+console assertion — renders still returned). `cpp/wasm-superbuild/emoji_png.cmake`
+re-encodes the sprites to PNG at build time and maps them onto the same
+`:/gui/emoji/emoji_N.webp` resource paths, so no upstream code changes and
+the raster is identical. Adds ~9 MB to the artifact (25 → 34.5 MB raw).
 
 ## Determinism check
 

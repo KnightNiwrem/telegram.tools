@@ -240,6 +240,9 @@ include(${submodules_loc}/cmake/td_scheme.cmake)
 include(${submodules_loc}/cmake/td_ui.cmake)
 include(${submodules_loc}/cmake/td_iv.cmake)
 
+# --- Emoji sprites as PNG (Qt-wasm has no WebP plugin).
+include(${CMAKE_CURRENT_SOURCE_DIR}/emoji_png.cmake)
+
 # --- The renderer itself (defines ttr_core + ttr_wasm_host under
 # EMSCRIPTEN).
 add_subdirectory(${ttr_renderer_loc}/cpp ttr-renderer)
