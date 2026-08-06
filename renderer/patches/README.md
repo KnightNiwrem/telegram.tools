@@ -6,9 +6,14 @@ time (`scripts/build-native.sh` / `scripts/build-wasm.sh` run
 completion). The submodule commit itself is never changed; UPSTREAM.md
 records the pinned revision.
 
+Patches are grouped by the repository they apply to (`tdesktop/` for the
+main tree, `lib_ui/` for the nested `Telegram/lib_ui` submodule), because
+`git apply` cannot cross submodule boundaries.
+
 | Patch | Purpose |
 | --- | --- |
-| `0001-add-renderer-harness-hook.patch` | Opt-in `add_subdirectory` hook in `Telegram/CMakeLists.txt` so the harness targets configure inside the pinned tree. No upstream behavior change when the option is unset. |
+| `tdesktop/0001-add-renderer-harness-hook.patch` | Opt-in `add_subdirectory` hook in `Telegram/CMakeLists.txt` so the harness targets configure inside the pinned tree. No upstream behavior change when the option is unset. |
+| `lib_ui/0001-guard-qaccessible-attribute-for-qt69.patch` | `QAccessible::Attribute::Orientation` needs Qt ≥ 6.10; guards it so the dev-host build compiles against distro Qt 6.9. Accessibility metadata only; a no-op under the pinned Qt. |
 
 Rules (plan Phases 2 and 14):
 

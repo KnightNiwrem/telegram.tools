@@ -18,8 +18,8 @@ command -v emcmake >/dev/null || {
     exit 1
 }
 
-git -C "${upstream}" apply "${renderer_dir}"/patches/*.patch 2>/dev/null || true
-trap 'git -C "${upstream}" apply --reverse "${renderer_dir}"/patches/*.patch 2>/dev/null || true' EXIT
+git -C "${upstream}" apply "${renderer_dir}"/patches/tdesktop/*.patch 2>/dev/null || true
+trap 'git -C "${upstream}" apply --reverse "${renderer_dir}"/patches/tdesktop/*.patch 2>/dev/null || true' EXIT
 
 emcmake cmake -S "${upstream}" -B "${build_dir}" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \

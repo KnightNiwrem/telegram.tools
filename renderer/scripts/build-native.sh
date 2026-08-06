@@ -27,24 +27,32 @@ if [[ "${1:-}" == "--deps" ]]; then
     shift || true
 fi
 
+lib_ui_patches() {
+    local mode="${1:-}"
+    git -C "${upstream}/Telegram/lib_ui" apply ${mode} \
+        "${renderer_dir}"/patches/lib_ui/*.patch 2>/dev/null || true
+}
+
 apply_patches() {
-    git -C "${upstream}" apply --check "${renderer_dir}"/patches/*.patch \
+    lib_ui_patches
+    git -C "${upstream}" apply --check "${renderer_dir}"/patches/tdesktop/*.patch \
         2>/dev/null || {
         echo "patches already applied or do not apply cleanly" >&2
         git -C "${upstream}" apply --reverse --check \
-            "${renderer_dir}"/patches/*.patch 2>/dev/null \
+            "${renderer_dir}"/patches/tdesktop/*.patch 2>/dev/null \
             && echo "(already applied; continuing)" \
             || exit 1
         return
     }
-    git -C "${upstream}" apply "${renderer_dir}"/patches/*.patch
+    git -C "${upstream}" apply "${renderer_dir}"/patches/tdesktop/*.patch
 }
 
 revert_patches() {
+    lib_ui_patches --reverse
     git -C "${upstream}" apply --reverse --check \
-        "${renderer_dir}"/patches/*.patch 2>/dev/null \
+        "${renderer_dir}"/patches/tdesktop/*.patch 2>/dev/null \
         && git -C "${upstream}" apply --reverse \
-            "${renderer_dir}"/patches/*.patch \
+            "${renderer_dir}"/patches/tdesktop/*.patch \
         || true
 }
 

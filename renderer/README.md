@@ -1,0 +1,58 @@
+# telegram.tools rich-message renderer
+
+A browser-embeddable renderer for Telegram rich messages that reuses
+Telegram Desktop's actual preparation, layout, and painting code
+(`Iv::Markdown::MarkdownArticle` at the pinned `v7.0.9` revision), compiled
+to WebAssembly. Implements
+`telegram-rich-message-wasm-implementation-plan.md` at the repository root.
+
+**License: GPL-3.0 with the OpenSSL exception** — this directory is a
+derivative work of Telegram Desktop and is licensed separately from the
+rest of the repository. See `LICENSE`, `LICENSING.md`, `UPSTREAM.md`, and
+`THIRD_PARTY_NOTICES.md`.
+
+## Layout
+
+```text
+upstream/tdesktop/   pinned TDesktop submodule (v7.0.9, a1e89e1f); never
+                     edited in place
+patches/             build-time patch stack (one opt-in CMake hook)
+cpp/                 sessionless renderer: canonical JSON -> Iv::RichPage,
+                     headless harness, native CLI host, WASM C ABI
+schema/              canonical rich-message JSON Schema v1 + pinned limits
+js/canonical/        TypeScript canonical model + limits validator
+js/adapter-grammy/   grammY InputRichMessage -> canonical (exhaustive)
+js/adapter-html/     HTML/Markdown input interface + fidelity-mode labels
+js/sdk/              public SDK: WASM loader, C-ABI binding, scheduling,
+                     canvas host
+tests/fixtures/      Phase 1 fixture corpus (76 fixtures)
+tests/               deno tests (93 passing): fixtures, flattener, limits
+scripts/             build-native / build-wasm / capture-goldens /
+                     compare-renders
+```
+
+## Status
+
+See `BUILD-STATUS.md` for the precise, honest state of each plan phase,
+including what is verified, what compiles, and what remains.
+
+## Quick start (TypeScript layer)
+
+```sh
+deno test --allow-read renderer/tests/   # adapter + schema + limits tests
+```
+
+## Native host
+
+```sh
+renderer/scripts/build-native.sh --deps  # install Ubuntu deps, then build
+renderer/build/native/ttr_native_host \
+    --request request.json --out out.png --meta out.json
+```
+
+## Renderer contract
+
+`js/sdk/types.ts` defines the versioned request/result shapes; the C ABI in
+`cpp/wasm-host/ttr_abi.h` and `js/sdk/module.ts` carry a lockstep ABI
+version. Every render result reports the renderer version and the pinned
+TDesktop revision.
