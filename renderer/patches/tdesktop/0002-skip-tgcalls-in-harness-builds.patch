@@ -1,0 +1,53 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] Skip tgcalls/webrtc-dependent td_ui pieces in harness builds
+
+Harness builds have no tg_owt/WebRTC toolchain. In td_ui, only
+ui/controls/round_video_recorder.cpp and
+calls/group/ui/desktop_capture_choose_source.cpp use tgcalls/lib_webrtc
+implementations; the sessionless renderer never touches them. Dropping
+the sources and the lib_tgcalls/lib_webrtc link edges (keeping the
+tg_owt-free lib_webrtc headers includable) removes the entire call-stack
+build requirement. As td_ui is an OBJECT library the recorder objects
+would otherwise drag undefined symbols into every consumer. Off by
+default; no change unless TDESKTOP_RENDERER_HARNESS_DIR is set.
+---
+diff --git a/Telegram/cmake/td_ui.cmake b/Telegram/cmake/td_ui.cmake
+index 65fbe61..52f5660 100644
+--- a/Telegram/cmake/td_ui.cmake
++++ b/Telegram/cmake/td_ui.cmake
+@@ -687,16 +687,33 @@ PUBLIC
+     ${src_loc}
+ )
+ 
++if (TDESKTOP_RENDERER_HARNESS_DIR)
++    # Harness builds have no tg_owt/WebRTC; the round video recorder and
++    # the desktop-capture source picker are the only td_ui pieces needing
++    # tgcalls, and nothing in the sessionless renderer uses them.
++    remove_target_sources(td_ui ${src_loc}
++        calls/group/ui/desktop_capture_choose_source.cpp
++        ui/controls/round_video_recorder.cpp
++    )
++    # lib_webrtc headers are tg_owt-free and remain includable; only its
++    # implementations (and thus the link) need the real WebRTC tree.
++    target_include_directories(td_ui PRIVATE ${src_loc}/../lib_webrtc)
++else()
++    target_link_libraries(td_ui
++    PRIVATE
++        tdesktop::lib_tgcalls
++        desktop-app::lib_webrtc
++    )
++endif()
++
+ target_link_libraries(td_ui
+ PUBLIC
+     tdesktop::td_lang
+     desktop-app::lib_ui
+     desktop-app::lib_lottie
+ PRIVATE
+-    tdesktop::lib_tgcalls
+     desktop-app::lib_ffmpeg
+     desktop-app::lib_webview
+-    desktop-app::lib_webrtc
+     desktop-app::lib_spellcheck
+     desktop-app::lib_stripe
+     desktop-app::external_kcoreaddons

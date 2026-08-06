@@ -13,6 +13,7 @@ main tree, `lib_ui/` for the nested `Telegram/lib_ui` submodule), because
 | Patch | Purpose |
 | --- | --- |
 | `tdesktop/0001-add-renderer-harness-hook.patch` | Opt-in `add_subdirectory` hook in `Telegram/CMakeLists.txt` so the harness targets configure inside the pinned tree. No upstream behavior change when the option is unset. |
+| `tdesktop/0002-skip-tgcalls-in-harness-builds.patch` | With the harness option set, drops `ui/controls/round_video_recorder.cpp` and its `lib_tgcalls` PRIVATE link from `td_ui` — the only td_ui piece needing tg_owt/WebRTC, unused by the sessionless renderer. No change when the option is unset. |
 | `lib_ui/0001-guard-qaccessible-attribute-for-qt69.patch` | `QAccessible::Attribute::Orientation` needs Qt ≥ 6.10; guards it so the dev-host build compiles against distro Qt 6.9. Accessibility metadata only; a no-op under the pinned Qt. |
 
 Rules (plan Phases 2 and 14):
