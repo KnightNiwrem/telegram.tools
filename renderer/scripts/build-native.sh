@@ -23,7 +23,18 @@ if [[ "${1:-}" == "--deps" ]]; then
         libswresample-dev libopenal-dev liblz4-dev libxxhash-dev \
         libminizip-dev protobuf-compiler libprotobuf-dev \
         libxcb1-dev libxcb-keysyms1-dev libxcb-record0-dev \
-        libxcb-screensaver0-dev libglibmm-2.68-dev
+        libxcb-screensaver0-dev libglibmm-2.68-dev \
+        libboost-dev libboost-regex-dev libboost-program-options-dev \
+        libprotoc-dev libabsl-dev libavfilter-dev libavdevice-dev \
+        libjpeg-dev libwebp-dev libpng-dev libtiff-dev liblzma-dev \
+        libhunspell-dev libgtk-3-dev libgirepository1.0-dev libepoxy-dev \
+        libfontconfig-dev libx11-xcb-dev libxcomposite-dev libxdamage-dev \
+        libxext-dev libxfixes-dev libxrender-dev libxrandr-dev libxtst-dev \
+        qt6-shadertools-dev autoconf automake libtool
+    # Not packaged on Ubuntu; build from source into /usr/local:
+    #   ada-url/ada (v2.9.2) and xiph/rnnoise. Ubuntu's protobuf ships no
+    #   CMake package config, and tg_owt/tde2e (calls stack, never linked
+    #   by the harness) need shim configs — see renderer/BUILD-STATUS.md.
     shift || true
 fi
 
@@ -65,6 +76,7 @@ cmake -S "${upstream}" -B "${build_dir}" -G Ninja \
     -DDESKTOP_APP_DISABLE_AUTOUPDATE=ON \
     -DDESKTOP_APP_DISABLE_CRASH_REPORTS=ON \
     -DDESKTOP_APP_USE_PACKAGED=ON \
+    -DQSB_EXECUTABLE=/usr/lib/qt6/bin/qsb \
     -DTDESKTOP_RENDERER_HARNESS_DIR="${renderer_dir}/cpp"
 
 cmake --build "${build_dir}" --target ttr_native_host "$@"

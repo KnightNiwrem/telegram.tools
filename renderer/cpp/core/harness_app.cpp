@@ -6,6 +6,7 @@ Telegram/SourceFiles/tests/test_main.cpp at the pinned revision.
 #include "core/harness_app.h"
 
 #include "ui/effects/animations.h"
+#include "ui/effects/spoiler_mess.h"
 #include "ui/emoji_config.h"
 #include "ui/style/style_core.h"
 
@@ -13,6 +14,8 @@ Telegram/SourceFiles/tests/test_main.cpp at the pinned revision.
 #include <QEvent>
 #include <QStandardPaths>
 #include <QThread>
+
+#include <cstdio>
 
 namespace Ttr {
 namespace {
@@ -47,8 +50,14 @@ void HarnessApp::checkForEmptyLoopNestingLevel() {
 	if (_loopNestingLevel == _eventNestingLevel) {
 		Assert(_postponedCalls.empty()
 			|| _postponedCalls.back().loopNestingLevel < _loopNestingLevel);
-		Assert(!_previousLoopNestingLevels.empty());
-
+		if (_previousLoopNestingLevels.empty()) {
+			// Divergence from tests/test_main.cpp: a headless single-shot
+			// render receives crl::on_main postpones outside any event-loop
+			// nesting (no app.exec() is running), so level 0 with an empty
+			// stack is the legitimate base state rather than a violation.
+			Assert(_loopNestingLevel == 0);
+			return;
+		}
 		_loopNestingLevel = _previousLoopNestingLevels.back();
 		_previousLoopNestingLevels.pop_back();
 	}
@@ -142,9 +151,11 @@ void HarnessBaseIntegration::logMessageDebug(const QString &message) {
 }
 
 void HarnessBaseIntegration::logMessage(const QString &message) {
+	fprintf(stderr, "[ttr] %s\n", message.toUtf8().constData());
 }
 
 void HarnessBaseIntegration::logAssertionViolation(const QString &info) {
+	fprintf(stderr, "[ttr] ASSERTION: %s\n", info.toUtf8().constData());
 }
 
 void HarnessUiIntegration::postponeCall(FnMut<void()> &&callable) {
@@ -200,6 +211,11 @@ int InitializeHarness(int scale) {
 		style::kScaleMin,
 		style::MaxScaleForRatio(1)));
 	Ui::Emoji::Init();
+	// Block until the spoiler masks exist: SpoilerAnimation asserts on a
+	// missing mask, and letting the async preload race process exit makes
+	// its RandomFill hit OpenSSL after atexit cleanup.
+	(void)Ui::DefaultTextSpoilerMask();
+	(void)Ui::DefaultImageSpoiler();
 	HarnessInitResult = 0;
 	return HarnessInitResult;
 }

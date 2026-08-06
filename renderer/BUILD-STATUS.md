@@ -54,14 +54,34 @@ machine-local, not committed):
   come from a pinned-Qt container build (plan §4), which is not yet set
   up.
 
-Build result: see the bottom of this file for the latest attempt log
-summary.
+**Build result: the native host builds and renders.**
+`build/native/ttr_native_host` (from `scripts/build-native.sh`) renders the
+entire blocks-mode fixture corpus — **71 fixtures × 3 canonical widths =
+213 goldens, zero failures** — through the unmodified
+`TryPrepareNativeInstantView` → `MarkdownArticle` layout/paint path.
+Captured goldens live in `tests/native-goldens/` (dev-profile: distro Qt
+6.9.2, light theme; canonical pinned-Qt goldens remain an open item).
+Spot-checked output includes correct Telegram task-list checkboxes,
+spoiler mess particles, BiDi shaping, table borders/spans/stripes/caption,
+quote bars, and syntax-highlighted code blocks.
+
+Link strategy note: `td_iv`/`td_ui` are OBJECT libraries whose editor/box
+objects reference application symbols that only exist in the Telegram
+executable. Symbols the render path needs are linked for real or provided
+byte-identically in `cpp/core/link_stubs.cpp` (`LocationClickHandler::Url`,
+three `Data::LocationPoint` members, `Lang::details::Current/Value` over
+the generated base-English values, `Iv::Encode/DecodeRichPageLinkUrl`);
+remaining app-only references resolve to null via
+`--unresolved-symbols=ignore-all` and would crash loudly if reached — the
+full-corpus golden capture is the tripwire, and it passes clean.
 
 ## Not yet implemented (ordered by plan sequence)
 
-- **Phase 2 verification**: in-TDesktop reference comparison, ASan/UBSan
-  runs, golden capture (requires the built native host + a reference
-  TDesktop build).
+- **Phase 2 verification remainder**: comparison against an unmodified
+  in-TDesktop `RichDraftPreview` capture (requires a full reference client
+  build), ASan/UBSan runs, and pinned-Qt container goldens. The harness
+  renders and its goldens are recorded, but they are not yet certified
+  against the reference client.
 - **Phase 3 — Qt/WASM build**: requires emsdk + Qt-for-WebAssembly and a
   cross-compiled subset of the desktop-app externals (notably microtex,
   cmark-gfm, prisma for WASM; OpenSSL/ffmpeg-dependent parts of lib_ui

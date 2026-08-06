@@ -25,13 +25,14 @@ target_sources(ttr_core PRIVATE
     ${ttr_dir}/core/sessionless_media_runtime.cpp
     ${ttr_dir}/core/sessionless_media_runtime.h
     ${ttr_dir}/core/version.h
-    # Compiled from the pinned tree: plain data type used by map blocks
-    # (its click-handler half is stubbed in core/link_stubs.cpp).
-    ${src_loc}/data/data_location.cpp
-    ${src_loc}/data/data_location.h
 )
 
-target_include_directories(ttr_core PUBLIC ${ttr_dir} ${src_loc})
+target_include_directories(ttr_core PUBLIC
+    ${ttr_dir}
+    ${src_loc}
+    ${src_loc}/../lib_webview
+)
+target_precompile_headers(ttr_core PRIVATE ${ttr_dir}/core/ttr_pch.h)
 
 target_link_libraries(ttr_core
 PUBLIC
@@ -44,11 +45,33 @@ PUBLIC
     desktop-app::external_qt
 )
 
+# Object files of OBJECT libraries do not chain transitively through
+# ttr_core; final targets must link the tdesktop object libraries directly.
+set(ttr_link_closure
+    ttr_core
+    tdesktop::td_iv
+    tdesktop::td_ui
+    tdesktop::td_lang
+    desktop-app::lib_ui
+    desktop-app::lib_base
+    desktop-app::lib_lottie
+    desktop-app::lib_spellcheck
+)
+
+# td_iv/td_ui are OBJECT libraries whose editor/box objects reference
+# application symbols (AdminLog, ChatHelpers, window controllers, ...)
+# that only exist inside the Telegram executable. The sessionless render
+# path never reaches them; symbols the path DOES need are linked for real
+# or provided byte-identically in core/link_stubs.cpp. Remaining app-only
+# references resolve to null and would crash loudly if ever hit — the
+# smoke render in scripts/capture-goldens.sh is the tripwire.
+set(ttr_host_link_options -Wl,--unresolved-symbols=ignore-all)
+
 if (EMSCRIPTEN)
     add_executable(ttr_wasm_host ${ttr_dir}/wasm-host/ttr_abi.cpp
         ${ttr_dir}/wasm-host/ttr_abi.h)
     init_target(ttr_wasm_host)
-    target_link_libraries(ttr_wasm_host PRIVATE ttr_core)
+    target_link_libraries(ttr_wasm_host PRIVATE ${ttr_link_closure})
     target_link_options(ttr_wasm_host PRIVATE
         -sMODULARIZE=1
         -sEXPORT_ES6=1
@@ -61,7 +84,10 @@ if (EMSCRIPTEN)
 else()
     add_executable(ttr_native_host ${ttr_dir}/native-host/main.cpp)
     init_target(ttr_native_host)
-    target_link_libraries(ttr_native_host PRIVATE ttr_core)
+    target_link_libraries(ttr_native_host PRIVATE ${ttr_link_closure})
+    target_link_options(ttr_native_host PRIVATE ${ttr_host_link_options})
+    target_precompile_headers(ttr_native_host PRIVATE
+        ${ttr_dir}/core/ttr_pch.h)
 
     # Emoji sprite resources required by Ui::Emoji::Init(), mirrored from
     # Telegram/cmake/tests.cmake (test_text target).

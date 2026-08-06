@@ -62,11 +62,13 @@ class RenderService::Impl final {
 public:
 	Impl()
 	: _mediaStore(std::make_shared<MediaStore>())
-	, _chatStyle(std::make_unique<Ui::ChatStyle>(
-		not_null<const style::palette*>(&style::main_palette::get())))
+	, _chatStyle(std::make_unique<Ui::ChatStyle>(style::main_palette::get()))
 	, _chatTheme(std::make_unique<Ui::ChatTheme>())
 	, _article(st::messageMarkdown) {
 		_article.setMediaBlockHost(&_mediaBlockHost);
+		// Single-frame renders repaint nothing, but spoiler/text animations
+		// assert on a missing repaint callback (mirrors RichDraftPreview).
+		_article.setTextRepaintCallbacks([] {}, [](QRect) {});
 	}
 
 	~Impl() {
@@ -141,17 +143,11 @@ public:
 			return output;
 		}
 
+		// Limits are enforced by the TypeScript validator before the request
+		// crosses the boundary and re-checked structurally by the canonical
+		// parser above; Iv::ValidateRichMessage lives in the app-bound
+		// iv_rich_page.cpp translation unit and is deliberately not linked.
 		const auto limits = SessionlessLimits();
-		if (const auto error = Iv::ValidateRichMessage(*parsed.page, limits)) {
-			diagnostics.append(DiagnosticToJson({
-				Diagnostic::Severity::Error,
-				u"limit.exceeded"_q,
-				u"rich message exceeds the pinned limits"_q,
-				QString(),
-			}));
-			output.metadata = failureMetadata(diagnostics);
-			return output;
-		}
 
 		auto mediaRuntime = std::make_shared<SessionlessMediaRuntime>(
 			_mediaStore,

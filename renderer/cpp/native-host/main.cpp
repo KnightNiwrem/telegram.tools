@@ -20,6 +20,7 @@ Usage:
 #include <QtCore/QMimeDatabase>
 
 #include <cstdio>
+#include <unistd.h>
 
 namespace {
 
@@ -109,21 +110,31 @@ int main(int argc, char *argv[]) {
 	}
 
 	const auto output = service.render(requestDocument.object());
+	// Single-shot tool: exit without running C++ teardown once outputs are
+	// flushed. Async workers spawned by the render (prisma syntax
+	// highlighting, spoiler/animation timers, the tmc pool) race static
+	// destructors otherwise and crash after the outputs are already valid.
+	const auto finish = [](int code) {
+		std::fflush(stdout);
+		std::fflush(stderr);
+		::_exit(code);
+	};
 	if (parser.isSet(metaOption)) {
 		auto metaFile = QFile(parser.value(metaOption));
 		if (!metaFile.open(QIODevice::WriteOnly)) {
 			std::fputs("cannot write metadata file\n", stderr);
-			return 2;
+			finish(2);
 		}
 		metaFile.write(QJsonDocument(output.metadata).toJson());
+		metaFile.close();
 	}
 	if (!output.ok) {
 		std::fputs("render failed; see metadata diagnostics\n", stderr);
-		return 1;
+		finish(1);
 	}
 	if (!output.image.save(parser.value(outOption), "PNG")) {
 		std::fputs("cannot write output image\n", stderr);
-		return 2;
+		finish(2);
 	}
-	return 0;
+	finish(0);
 }
