@@ -1,0 +1,42 @@
+{
+  "id": "inline-math",
+  "description": "Inline mathematical expression covering its LaTeX source.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Pythagoras: ",
+          {
+            "type": "mathematical_expression",
+            "expression": "x^2 + y^2 = z^2"
+          },
+          " holds."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Pythagoras: x^2 + y^2 = z^2 holds.",
+            "entities": [
+              {
+                "type": "math",
+                "offset": 12,
+                "length": 15,
+                "expression": "x^2 + y^2 = z^2"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

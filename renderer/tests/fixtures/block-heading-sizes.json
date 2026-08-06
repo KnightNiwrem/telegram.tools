@@ -1,0 +1,89 @@
+{
+  "id": "block-heading-sizes",
+  "description": "Six heading blocks covering every size 1-6.",
+  "input": {
+    "blocks": [
+      {
+        "type": "heading",
+        "text": "Heading level 1",
+        "size": 1
+      },
+      {
+        "type": "heading",
+        "text": "Heading level 2",
+        "size": 2
+      },
+      {
+        "type": "heading",
+        "text": "Heading level 3",
+        "size": 3
+      },
+      {
+        "type": "heading",
+        "text": "Heading level 4",
+        "size": 4
+      },
+      {
+        "type": "heading",
+        "text": "Heading level 5",
+        "size": 5
+      },
+      {
+        "type": "heading",
+        "text": "Heading level 6",
+        "size": 6
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 1"
+          },
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 2"
+          },
+          "level": 2
+        },
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 3"
+          },
+          "level": 3
+        },
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 4"
+          },
+          "level": 4
+        },
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 5"
+          },
+          "level": 5
+        },
+        {
+          "kind": "heading",
+          "text": {
+            "text": "Heading level 6"
+          },
+          "level": 6
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "id": "block-photo-basic",
+  "description": "Photo block with a caption and credit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "photo",
+        "photo": {
+          "type": "photo",
+          "media": "https://telegram.org/example/photo.jpg"
+        },
+        "caption": {
+          "text": "Photo caption",
+          "credit": "Photo credit"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "photo",
+          "media": {
+            "ref": "m0",
+            "kind": "photo"
+          },
+          "caption": {
+            "text": {
+              "text": "Photo caption"
+            },
+            "credit": {
+              "text": "Photo credit"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

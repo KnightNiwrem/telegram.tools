@@ -1,0 +1,43 @@
+{
+  "id": "edge-bidi-rtl-with-ltr",
+  "description": "is_rtl message whose Arabic text contains LTR (Latin) runs.",
+  "input": {
+    "is_rtl": true,
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "أهلاً بـ ",
+          {
+            "type": "code",
+            "text": "Telegram"
+          },
+          " ومرحباً بـ English في النص."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "أهلاً بـ Telegram ومرحباً بـ English في النص.",
+            "entities": [
+              {
+                "type": "code",
+                "offset": 9,
+                "length": 8
+              }
+            ]
+          }
+        }
+      ],
+      "rtl": true
+    },
+    "diagnostics": []
+  }
+}

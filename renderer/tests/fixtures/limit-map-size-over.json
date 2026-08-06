@@ -1,0 +1,41 @@
+{
+  "id": "limit-map-size-over",
+  "description": "Map with width + height above 10000.",
+  "input": {
+    "blocks": [
+      {
+        "type": "map",
+        "location": {
+          "latitude": 41.9,
+          "longitude": 12.5
+        },
+        "zoom": 14,
+        "width": 6000,
+        "height": 5000
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "map",
+          "latitude": 41.9,
+          "longitude": 12.5,
+          "zoom": 14,
+          "width": 6000,
+          "height": 5000
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "limit.map-size",
+        "path": "$.blocks[0]"
+      }
+    ]
+  }
+}

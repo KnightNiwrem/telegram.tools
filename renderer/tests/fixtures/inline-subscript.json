@@ -1,0 +1,41 @@
+{
+  "id": "inline-subscript",
+  "description": "Subscript entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "H",
+          {
+            "type": "subscript",
+            "text": "2"
+          },
+          "O"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "H2O",
+            "entities": [
+              {
+                "type": "subscript",
+                "offset": 1,
+                "length": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

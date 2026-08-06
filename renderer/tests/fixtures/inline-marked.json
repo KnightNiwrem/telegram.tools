@@ -1,0 +1,41 @@
+{
+  "id": "inline-marked",
+  "description": "Marked (highlighted) entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "This is ",
+          {
+            "type": "marked",
+            "text": "marked"
+          },
+          " text."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "This is marked text.",
+            "entities": [
+              {
+                "type": "marked",
+                "offset": 8,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

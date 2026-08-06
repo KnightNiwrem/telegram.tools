@@ -1,0 +1,42 @@
+{
+  "id": "block-thinking-basic",
+  "description": "Thinking placeholder block with a custom emoji.",
+  "input": {
+    "blocks": [
+      {
+        "type": "thinking",
+        "text": [
+          {
+            "type": "custom_emoji",
+            "custom_emoji_id": "5368324170671202286",
+            "alternative_text": "🤔"
+          },
+          " Thinking…"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "thinking",
+          "text": {
+            "text": "🤔 Thinking…",
+            "entities": [
+              {
+                "type": "custom_emoji",
+                "offset": 0,
+                "length": 2,
+                "customEmojiId": "5368324170671202286"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

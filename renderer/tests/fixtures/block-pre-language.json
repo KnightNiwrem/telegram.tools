@@ -1,0 +1,29 @@
+{
+  "id": "block-pre-language",
+  "description": "Preformatted code block with an explicit language.",
+  "input": {
+    "blocks": [
+      {
+        "type": "pre",
+        "text": "def greet(name):\n    return f'Hello, {name}!'",
+        "language": "python"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "pre",
+          "text": {
+            "text": "def greet(name):\n    return f'Hello, {name}!'"
+          },
+          "language": "python"
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

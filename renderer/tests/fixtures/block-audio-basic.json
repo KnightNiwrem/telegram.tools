@@ -1,0 +1,45 @@
+{
+  "id": "block-audio-basic",
+  "description": "Audio block with duration, title, and performer.",
+  "input": {
+    "blocks": [
+      {
+        "type": "audio",
+        "audio": {
+          "type": "audio",
+          "media": "https://telegram.org/example/audio.mp3",
+          "duration": 240,
+          "performer": "The Performer",
+          "title": "The Title"
+        },
+        "caption": {
+          "text": "Audio caption"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "audio",
+          "media": {
+            "ref": "m0",
+            "kind": "audio",
+            "duration": 240,
+            "title": "The Title",
+            "performer": "The Performer"
+          },
+          "caption": {
+            "text": {
+              "text": "Audio caption"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

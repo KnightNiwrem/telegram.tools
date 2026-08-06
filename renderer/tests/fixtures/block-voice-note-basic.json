@@ -1,0 +1,41 @@
+{
+  "id": "block-voice-note-basic",
+  "description": "Voice note block with duration.",
+  "input": {
+    "blocks": [
+      {
+        "type": "voice_note",
+        "voice_note": {
+          "type": "voice_note",
+          "media": "https://telegram.org/example/audio.ogg",
+          "duration": 12
+        },
+        "caption": {
+          "text": "Voice note caption"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "voice_note",
+          "media": {
+            "ref": "m0",
+            "kind": "voice_note",
+            "duration": 12
+          },
+          "caption": {
+            "text": {
+              "text": "Voice note caption"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

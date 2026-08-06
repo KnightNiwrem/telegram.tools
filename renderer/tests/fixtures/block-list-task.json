@@ -1,0 +1,87 @@
+{
+  "id": "block-list-task",
+  "description": "Task list with checked and unchecked checkboxes.",
+  "input": {
+    "blocks": [
+      {
+        "type": "list",
+        "items": [
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "done"
+              }
+            ],
+            "has_checkbox": true,
+            "is_checked": true
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "pending"
+              }
+            ],
+            "has_checkbox": true
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "plain item"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "list",
+          "ordered": false,
+          "items": [
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "done"
+                  }
+                }
+              ],
+              "taskState": "checked"
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "pending"
+                  }
+                }
+              ],
+              "taskState": "unchecked"
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "plain item"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

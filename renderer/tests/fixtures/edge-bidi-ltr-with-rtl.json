@@ -1,0 +1,43 @@
+{
+  "id": "edge-bidi-ltr-with-rtl",
+  "description": "LTR paragraph containing Arabic and Hebrew runs.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "The Arabic greeting ",
+          {
+            "type": "bold",
+            "text": "مرحبا بالعالم"
+          },
+          " and the Hebrew ",
+          "שלום עולם",
+          " appear inline."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "The Arabic greeting مرحبا بالعالم and the Hebrew שלום עולם appear inline.",
+            "entities": [
+              {
+                "type": "bold",
+                "offset": 20,
+                "length": 13
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

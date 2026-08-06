@@ -1,0 +1,43 @@
+{
+  "id": "inline-bot-command",
+  "description": "Bot command entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Send ",
+          {
+            "type": "bot_command",
+            "text": "/start",
+            "bot_command": "/start"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Send /start.",
+            "entities": [
+              {
+                "type": "bot_command",
+                "botCommand": "/start",
+                "offset": 5,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

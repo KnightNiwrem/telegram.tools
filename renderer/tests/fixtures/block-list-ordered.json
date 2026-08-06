@@ -1,0 +1,100 @@
+{
+  "id": "block-list-ordered",
+  "description": "Ordered list inferred from value/type numbering fields; the adapter records the inference as an info diagnostic.",
+  "input": {
+    "blocks": [
+      {
+        "type": "list",
+        "items": [
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "seventh item"
+              }
+            ],
+            "value": 7,
+            "type": "1"
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "eighth item"
+              }
+            ],
+            "value": 8,
+            "type": "1"
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "roman item"
+              }
+            ],
+            "value": 9,
+            "type": "i"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "list",
+          "ordered": true,
+          "items": [
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "seventh item"
+                  }
+                }
+              ],
+              "value": 7,
+              "numberingType": "1"
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "eighth item"
+                  }
+                }
+              ],
+              "value": 8,
+              "numberingType": "1"
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "roman item"
+                  }
+                }
+              ],
+              "value": 9,
+              "numberingType": "i"
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "adapter.list-order-inferred",
+        "path": "blocks[0]"
+      }
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "comment": "Sessionless rich-message limits pinned to TDesktop v7.0.9 (Iv::RichMessageLimits defaults in Telegram/SourceFiles/iv/iv_rich_page.h) which match the Bot API documentation in grammy_types@v4.0.0 rich.ts.",
+  "lengthLimit": 32768,
+  "maxBlocks": 500,
+  "maxDepth": 16,
+  "maxMedia": 50,
+  "maxTableCols": 20,
+  "collageMaxItems": 10
+}

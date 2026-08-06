@@ -1,0 +1,43 @@
+{
+  "id": "inline-link-url",
+  "description": "Inline URL link entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Open ",
+          {
+            "type": "url",
+            "text": "Telegram",
+            "url": "https://t.me/"
+          },
+          " now."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Open Telegram now.",
+            "entities": [
+              {
+                "type": "url",
+                "url": "https://t.me/",
+                "offset": 5,
+                "length": 8
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

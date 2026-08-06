@@ -1,0 +1,27 @@
+{
+  "id": "edge-line-breaks-spaces",
+  "description": "Hard line breaks and repeated spaces inside one paragraph.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "line one\nline two\n\nline four  with   repeated    spaces\ntrailing  "
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "line one\nline two\n\nline four  with   repeated    spaces\ntrailing  "
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

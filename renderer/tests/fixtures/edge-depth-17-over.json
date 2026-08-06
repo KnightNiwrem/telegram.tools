@@ -1,0 +1,193 @@
+{
+  "id": "edge-depth-17-over",
+  "description": "Sixteen nested blockquotes put a paragraph at depth 17, one past the limit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "blockquote",
+        "blocks": [
+          {
+            "type": "blockquote",
+            "blocks": [
+              {
+                "type": "blockquote",
+                "blocks": [
+                  {
+                    "type": "blockquote",
+                    "blocks": [
+                      {
+                        "type": "blockquote",
+                        "blocks": [
+                          {
+                            "type": "blockquote",
+                            "blocks": [
+                              {
+                                "type": "blockquote",
+                                "blocks": [
+                                  {
+                                    "type": "blockquote",
+                                    "blocks": [
+                                      {
+                                        "type": "blockquote",
+                                        "blocks": [
+                                          {
+                                            "type": "blockquote",
+                                            "blocks": [
+                                              {
+                                                "type": "blockquote",
+                                                "blocks": [
+                                                  {
+                                                    "type": "blockquote",
+                                                    "blocks": [
+                                                      {
+                                                        "type": "blockquote",
+                                                        "blocks": [
+                                                          {
+                                                            "type": "blockquote",
+                                                            "blocks": [
+                                                              {
+                                                                "type": "blockquote",
+                                                                "blocks": [
+                                                                  {
+                                                                    "type": "blockquote",
+                                                                    "blocks": [
+                                                                      {
+                                                                        "type": "paragraph",
+                                                                        "text": "innermost"
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "blockquote",
+          "blocks": [
+            {
+              "kind": "blockquote",
+              "blocks": [
+                {
+                  "kind": "blockquote",
+                  "blocks": [
+                    {
+                      "kind": "blockquote",
+                      "blocks": [
+                        {
+                          "kind": "blockquote",
+                          "blocks": [
+                            {
+                              "kind": "blockquote",
+                              "blocks": [
+                                {
+                                  "kind": "blockquote",
+                                  "blocks": [
+                                    {
+                                      "kind": "blockquote",
+                                      "blocks": [
+                                        {
+                                          "kind": "blockquote",
+                                          "blocks": [
+                                            {
+                                              "kind": "blockquote",
+                                              "blocks": [
+                                                {
+                                                  "kind": "blockquote",
+                                                  "blocks": [
+                                                    {
+                                                      "kind": "blockquote",
+                                                      "blocks": [
+                                                        {
+                                                          "kind": "blockquote",
+                                                          "blocks": [
+                                                            {
+                                                              "kind": "blockquote",
+                                                              "blocks": [
+                                                                {
+                                                                  "kind": "blockquote",
+                                                                  "blocks": [
+                                                                    {
+                                                                      "kind": "blockquote",
+                                                                      "blocks": [
+                                                                        {
+                                                                          "kind": "paragraph",
+                                                                          "text": {
+                                                                            "text": "innermost"
+                                                                          }
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "limit.depth",
+        "path": "$.blocks[0]"
+      }
+    ]
+  }
+}

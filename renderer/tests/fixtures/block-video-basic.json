@@ -1,0 +1,47 @@
+{
+  "id": "block-video-basic",
+  "description": "Video block with dimensions, duration, and a spoiler cover.",
+  "input": {
+    "blocks": [
+      {
+        "type": "video",
+        "video": {
+          "type": "video",
+          "media": "https://telegram.org/example/video.mp4",
+          "width": 1920,
+          "height": 1080,
+          "duration": 60,
+          "has_spoiler": true
+        },
+        "caption": {
+          "text": "Video caption"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "video",
+          "media": {
+            "ref": "m0",
+            "kind": "video",
+            "width": 1920,
+            "height": 1080,
+            "duration": 60,
+            "spoiler": true
+          },
+          "caption": {
+            "text": {
+              "text": "Video caption"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

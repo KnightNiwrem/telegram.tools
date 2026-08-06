@@ -1,0 +1,291 @@
+{
+  "id": "limit-table-columns-21",
+  "description": "A table row spanning 21 columns exceeds the 20-column limit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "table",
+        "cells": [
+          [
+            {
+              "text": "C1",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C2",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C3",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C4",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C5",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C6",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C7",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C8",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C9",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C10",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C11",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C12",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C13",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C14",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C15",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C16",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C17",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C18",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C19",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C20",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C21",
+              "align": "left",
+              "valign": "top"
+            }
+          ]
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "table",
+          "rows": [
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C1"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C2"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C3"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C4"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C5"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C6"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C7"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C8"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C9"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C10"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C11"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C12"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C13"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C14"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C15"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C16"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C17"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C18"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C19"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C20"
+                  }
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C21"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "limit.table-columns",
+        "path": "$.blocks[0].rows[0]"
+      }
+    ]
+  }
+}

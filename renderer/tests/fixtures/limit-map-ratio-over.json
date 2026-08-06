@@ -1,0 +1,41 @@
+{
+  "id": "limit-map-ratio-over",
+  "description": "Map with a 40:1 width/height ratio, above the 20:1 limit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "map",
+        "location": {
+          "latitude": 41.9,
+          "longitude": 12.5
+        },
+        "zoom": 14,
+        "width": 4000,
+        "height": 100
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "map",
+          "latitude": 41.9,
+          "longitude": 12.5,
+          "zoom": 14,
+          "width": 4000,
+          "height": 100
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "limit.map-ratio",
+        "path": "$.blocks[0]"
+      }
+    ]
+  }
+}

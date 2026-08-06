@@ -1,0 +1,45 @@
+{
+  "id": "inline-date-time",
+  "description": "Date-time entity with unix time and format.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "See you at ",
+          {
+            "type": "date_time",
+            "text": "22:45 tomorrow",
+            "unix_time": 1647531900,
+            "date_time_format": "wDT"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "See you at 22:45 tomorrow.",
+            "entities": [
+              {
+                "type": "date_time",
+                "unixTime": 1647531900,
+                "format": "wDT",
+                "offset": 11,
+                "length": 14
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

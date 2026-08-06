@@ -1,0 +1,82 @@
+{
+  "id": "block-list-unordered",
+  "description": "Unordered list; no item carries value/type, so ordered is false.",
+  "input": {
+    "blocks": [
+      {
+        "type": "list",
+        "items": [
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "first item"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "second item"
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "third item"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "list",
+          "ordered": false,
+          "items": [
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "first item"
+                  }
+                }
+              ]
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "second item"
+                  }
+                }
+              ]
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "third item"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

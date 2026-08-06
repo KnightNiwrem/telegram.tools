@@ -1,0 +1,25 @@
+{
+  "id": "block-math-expression",
+  "description": "A block-level mathematical expression in LaTeX.",
+  "input": {
+    "blocks": [
+      {
+        "type": "mathematical_expression",
+        "expression": "E = mc^2"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "math",
+          "expression": "E = mc^2"
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

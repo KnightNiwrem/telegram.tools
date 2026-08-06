@@ -1,0 +1,43 @@
+{
+  "id": "inline-mention",
+  "description": "Username mention entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Ping ",
+          {
+            "type": "mention",
+            "text": "@durov",
+            "username": "durov"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Ping @durov.",
+            "entities": [
+              {
+                "type": "mention",
+                "username": "durov",
+                "offset": 5,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

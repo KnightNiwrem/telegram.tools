@@ -1,0 +1,41 @@
+{
+  "id": "inline-strikethrough",
+  "description": "Strikethrough wrapper entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "This is ",
+          {
+            "type": "strikethrough",
+            "text": "struck"
+          },
+          " text."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "This is struck text.",
+            "entities": [
+              {
+                "type": "strikethrough",
+                "offset": 8,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}
