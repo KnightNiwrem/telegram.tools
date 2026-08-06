@@ -15,3 +15,7 @@ renderer/build/
 renderer/dist/
 renderer/tests/wasm-output/
 renderer/tests/diffs/
+
+# WASM superbuild fetched third-party (build-wasm.sh downloads these)
+renderer/cpp/wasm-superbuild/third_party/ada/
+renderer/cpp/wasm-superbuild/third_party/boost-headers/

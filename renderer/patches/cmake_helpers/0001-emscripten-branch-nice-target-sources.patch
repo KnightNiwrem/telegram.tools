@@ -1,0 +1,30 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] Add an Emscripten branch to nice_target_sources
+
+WebAssembly matches no desktop platform: exclude every platform-specific
+source (win + mac + linux). posix/ files stay; Emscripten's libc is
+POSIX-shaped. Without this, ALL three platforms' sources compile under
+Emscripten because no exclusion branch matches.
+---
+diff --git a/nice_target_sources.cmake b/nice_target_sources.cmake
+index aa24595..d4d8b30 100644
+--- a/nice_target_sources.cmake
++++ b/nice_target_sources.cmake
+@@ -64,6 +64,17 @@ function(nice_target_sources target_name src_loc)
+     elseif (LINUX)
+         set_source_files_properties(${not_linux_sources} PROPERTIES HEADER_FILE_ONLY TRUE)
+         set_source_files_properties(${not_linux_sources} PROPERTIES SKIP_AUTOGEN TRUE)
++    elseif (EMSCRIPTEN)
++        # WebAssembly matches no desktop platform: exclude every
++        # platform-specific source (win + mac + linux); posix/ files stay,
++        # Emscripten's libc is POSIX-shaped.
++        set(not_wasm_sources
++            ${not_win_sources}
++            ${not_mac_sources}
++            ${not_linux_sources})
++        list(REMOVE_DUPLICATES not_wasm_sources)
++        set_source_files_properties(${not_wasm_sources} PROPERTIES HEADER_FILE_ONLY TRUE)
++        set_source_files_properties(${not_wasm_sources} PROPERTIES SKIP_AUTOGEN TRUE)
+     endif()
+ endfunction()
+ 
