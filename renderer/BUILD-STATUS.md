@@ -86,8 +86,11 @@ full-corpus golden capture is the tripwire, and it passes clean.
   renders and its goldens are recorded, but they are not yet certified
   against the reference client.
 - **Phase 3 remainder**: pixel-level fidelity (below), the one pullquote
-  spacing difference, binary-size work (34.5 MB raw / ~13 MB gzipped;
-  the emoji sprites are a large share), Firefox and WebKit runs, and the
+  spacing difference, binary-size work (52 MB raw / 37 MB gzipped; the
+  ~26 MB of embedded emoji-sprite PNGs are the dominant share and are
+  already-compressed data, so the practical fix is loading them lazily
+  outside the binary rather than better transport compression),
+  Firefox and WebKit runs, and the
   performance measurements the plan asks for (cold init, warm render,
   memory high-water).
 - **Phase 5** block-family fidelity matrix (needs goldens).
@@ -161,7 +164,11 @@ Qt for WebAssembly ships no WebP image plugin, so TDesktop's
 console assertion — renders still returned). `cpp/wasm-superbuild/emoji_png.cmake`
 re-encodes the sprites to PNG at build time and maps them onto the same
 `:/gui/emoji/emoji_N.webp` resource paths, so no upstream code changes and
-the raster is identical. Adds ~9 MB to the artifact (25 → 34.5 MB raw).
+the raster is identical. Costly: the PNG re-encode adds ~26 MB to the
+artifact (25 → 52 MB raw; earlier notes understated this as ~9 MB), and
+being already-compressed it also dominates the gzipped size (10 → 37 MB).
+Getting the sprites out of the binary is the top item of the Phase 3
+binary-size work.
 
 ## Determinism check
 

@@ -52,7 +52,8 @@ cp renderer/dist/ttr-renderer.{js,wasm} static/rich-message-renderer/
 deno task start   # -> /rich-message-preview
 ```
 
-The artifact (34.5 MB, ~13 MB gzipped) is not committed; `static/` and
+The artifact (52 MB, 37 MB gzipped — the ~26 MB of emoji sprite PNGs
+are the dominant share and barely compress) is not committed; `static/` and
 `renderer/dist/` are gitignored. `scripts/verify-wasm.sh` compares the
 browser output against the native goldens (`--geometry-only` gates on
 render failures and geometry only, with known differences listed in
