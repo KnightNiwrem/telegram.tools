@@ -107,7 +107,7 @@ InputRichMessage / HTML / Markdown
   C++ JSON -> Iv::RichPage conversion
                 |
                 v
- TryPrepareNativeInstantView / native preparation
+ PrepareNativeIvBlocks / native preparation
                 |
                 v
        MarkdownArticle layout + paint
@@ -239,8 +239,27 @@ before extracted code is published.
 - [ ] Review compatibility among TDesktop's licence, `telegram.tools`' licence,
       the VS Code extension's licence, Qt's applicable licence, and all bundled
       fonts/assets.
+- [ ] **License-conflict resolution (blocking).** The renderer WASM is derived
+      from TDesktop, which is GPL-3.0 (with the OpenSSL exception). The two
+      product targets differ:
+  - `telegram.tools` is **AGPL-3.0** — compatible with statically bundling the
+    GPL-derived artifact.
+  - `grammyjs/vscode` is **MIT** — statically bundling GPL-derived WASM into it
+    would force the combined distributed work to GPL/AGPL terms, which conflicts
+    with keeping the extension MIT.
+- [ ] **Chosen approach:** ship the TDesktop-derived renderer as a **separate,
+      independently distributed GPL-licensed artifact** (own package/repo, own
+      LICENSE and source-offer), and have the MIT VS Code extension **load** that
+      artifact at runtime rather than vendoring or statically bundling its
+      sources. The extension stays MIT; the renderer stays GPL; they are
+      distributed together but licensed separately (mere aggregation / a loaded
+      component, not a single combined work). Record this decision, and confirm
+      with counsel that the extension↔renderer boundary is an
+      arm's-length load, not a derivative combination, for the packaging form
+      used (see Phase 10/12).
 - [ ] Document how corresponding source, build instructions, licence text, and
-      notices will accompany distributed WASM.
+      notices will accompany the distributed WASM — including the separate
+      source-offer for the GPL renderer artifact consumed by the MIT extension.
 - [ ] Explicitly define the first product as “TDesktop `v7.0.9` rich-message
       content preview,” not complete chat chrome.
 
@@ -251,11 +270,18 @@ before extracted code is published.
 - [ ] A licence checklist names every redistributed source, binary, font, and
       theme asset and its handling.
 - [ ] No source is copied into the project without recorded provenance.
+- [ ] The GPL-renderer-vs-MIT-extension conflict is resolved on record: the
+      renderer is a separately licensed, separately distributed GPL artifact
+      that the MIT extension loads at runtime, with its own LICENSE and
+      source-offer. This is a **blocking** condition — packaging (Phase 10) and
+      VS Code integration (Phase 12) must not proceed until it is signed off.
 
 ### Exit gate
 
 The project has an immutable baseline, a buildable reference client, and an
-approved distribution/licensing strategy.
+approved distribution/licensing strategy — including a signed-off resolution of
+the GPL-renderer / MIT-extension boundary (renderer shipped as a separate GPL
+artifact, loaded by the MIT extension, not statically bundled).
 
 ## Phase 1 — Build the fidelity fixture corpus
 
@@ -265,7 +291,20 @@ Define what must render correctly before changing or extracting native code.
 
 ### Implementation
 
-- [ ] Create small, named fixtures for every available `InputRichBlock` kind.
+- [ ] Enumerate the **actual** exported `InputRichBlock` union members at the
+      pinned grammY SHA before writing fixtures — do not work from an idealized
+      block list. Confirmed exported leaf types at the pinned revision include
+      `InputRichBlockParagraph`, `InputRichBlockSectionHeading`,
+      `InputRichBlockList`, `InputRichBlockListItem`,
+      `InputRichBlockBlockQuotation`, `InputRichBlockDetails`,
+      `InputRichBlockPhoto`, `InputRichBlockVideo`, `InputRichBlockAudio`,
+      `InputRichBlockVoiceNote`, `InputRichBlockAnimation`,
+      `InputRichBlockCollage`, and `InputRichBlockSlideshow`. Kinds mentioned
+      only in doc-comments (tables, formula/math, map, footer, divider, anchor)
+      must be verified as distinct exported types before a fixture targets them;
+      if a kind is not a separately exported member, record how it is actually
+      represented in the union.
+- [ ] Create small, named fixtures for every enumerated `InputRichBlock` kind.
 - [ ] Create inline-text fixtures for plain text, bold, italic, underline,
       strikethrough, spoilers, code, links, mentions, custom emoji, nested
       entities, adjacent entities, and overlapping legal combinations.
@@ -315,9 +354,20 @@ Telegram session or connecting to Telegram.
 
 - [ ] Trace the dependency graph beginning at:
   - `HistoryView::Controls::RichDraftPreview`;
-  - `Iv::Markdown::TryPrepareNativeInstantView`;
+  - `Iv::Markdown::PrepareNativeIvBlocks` and
+    `Iv::Markdown::UpdatePreparedNativeIvLeaf`
+    (there is no `TryPrepareNativeInstantView` symbol at `v7.0.9`; native
+    preparation is entered through these two functions in
+    `iv_markdown_prepare_native_blocks.{h,cpp}`);
   - `Iv::Markdown::MarkdownArticle::setContent`;
   - `MarkdownArticle::resizeGetHeight` and `MarkdownArticle::paint`.
+- [ ] Confirm the extraction seam at the source level (verified against
+      `v7.0.9`): `MarkdownArticle(const style::Markdown&,
+      std::shared_ptr<MathRenderer>)` and `PrepareNativeIvBlocks` take no
+      `Main::Session`, `Window`, or `Delegate`, so the paragraph path is
+      session-free by construction. If a later block family reintroduces a
+      session dependency, record it as an explicit extraction risk rather than
+      assuming the seam stays clean.
 - [ ] Treat `RichDraftPreview` as the behavioral reference, but extract below
       its `QWidget` and `Main::Session` integration where possible.
 - [ ] Introduce a small `RendererContext` that provides only required style,
@@ -517,9 +567,21 @@ behavior from Telegram server normalization.
 ### Implementation
 
 - [ ] Expose TDesktop's HTML parsing/import conversion used by
-      `BlocksFromHtmlSource` through a sessionless adapter.
-- [ ] Separate pure HTML parsing/block conversion from session-bound media
-      resolution.
+      `BlocksFromHtmlSource` through an adapter. Note (verified against
+      `v7.0.9`): this function is **not** session-free — its signature is
+      `BlocksFromHtmlSource(not_null<Main::Session*> session, const QString&
+      html, const QString& basePath, const RichMessageLimits&, int usedBlocks)`,
+      so the session is taken at the top-level entry, not only for media.
+- [ ] Trace what the `Main::Session*` is actually used for inside
+      `BlocksFromHtmlSource` before assuming any seam. It delegates to
+      `TextUtilities::BlocksFromHtml()` and an `ImportContext`; determine
+      whether the session-free seam is `TextUtilities::BlocksFromHtml` (or a
+      lower layer) and build the sessionless adapter there, stubbing/faking the
+      session-bound remainder (e.g. media/base-path resolution) with a
+      deterministic fixture context.
+- [ ] Do not treat "pure HTML parsing vs session-bound media resolution" as a
+      given separation; prove where it lies during extraction and record it,
+      since the public entry point does not expose it.
 - [ ] Feed imported blocks into the same canonical/native rendering path.
 - [ ] Add Markdown using TDesktop's applicable rich-message parsing path where
       one exists; otherwise document and isolate the chosen parser.
@@ -642,6 +704,11 @@ Produce one consumable artifact for both product integrations.
 - [ ] Use content-hashed assets and expose a renderer version string.
 - [ ] Publish corresponding source/build instructions as required by the
       licensing decision from Phase 0.
+- [ ] Package the TDesktop-derived renderer as its **own GPL-licensed artifact**
+      with its own LICENSE and written source-offer, per the Phase 0 decision.
+      Consumers (including the MIT VS Code extension) load it as an
+      arm's-length component; the package must not require vendoring TDesktop
+      sources into an MIT consumer.
 - [ ] Add a minimal example app that imports only the released package.
 
 ### Verification
@@ -649,6 +716,9 @@ Produce one consumable artifact for both product integrations.
 - [ ] The example app builds in a clean checkout without TDesktop source present.
 - [ ] The distributed WASM checksum matches the release manifest.
 - [ ] Package consumers cannot accidentally load mismatched JS and WASM versions.
+- [ ] The GPL renderer artifact ships with its own LICENSE and source-offer, and
+      an MIT consumer can depend on it without inheriting GPL obligations into
+      its own sources (loaded component, not statically combined).
 - [ ] Init/render/dispose integration tests pass under all supported browsers.
 
 ### Exit gate
@@ -702,7 +772,11 @@ Show the same preview while a developer edits grammY code.
 
 - [ ] Add a Rich Message Preview webview using the extension's existing webview
       infrastructure.
-- [ ] Bundle the exact same SDK/WASM release used by `telegram.tools`.
+- [ ] Consume the exact same SDK/WASM release used by `telegram.tools`, as the
+      **separately licensed GPL renderer artifact** (Phase 0 decision). The MIT
+      extension loads it at runtime and ships it alongside its own code with the
+      renderer's LICENSE and source-offer intact — it does not vendor TDesktop
+      sources or relicense the artifact. Keep the extension's own sources MIT.
 - [ ] Load assets using VS Code webview URIs and a strict nonce-based CSP.
 - [ ] Add commands such as:
   - `grammY: Open Rich Message Preview`;
