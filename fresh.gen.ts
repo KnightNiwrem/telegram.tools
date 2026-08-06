@@ -12,6 +12,7 @@ import * as $file_id_analyzer from "./routes/file-id-analyzer.tsx";
 import * as $filter_query_browser from "./routes/filter-query-browser.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $inline_message_id_unpacker from "./routes/inline-message-id-unpacker.tsx";
+import * as $rich_message_preview from "./routes/rich-message-preview.tsx";
 import * as $session_string_analyzer from "./routes/session-string-analyzer.tsx";
 import * as $session_string_converter from "./routes/session-string-converter.tsx";
 import * as $session_string_generator from "./routes/session-string-generator.tsx";
@@ -27,6 +28,7 @@ import * as $FileIdAnalyzer from "./islands/FileIdAnalyzer.tsx";
 import * as $FilterQueryBrowser from "./islands/FilterQueryBrowser.tsx";
 import * as $InlineMessageIdUnpacker from "./islands/InlineMessageIdUnpacker.tsx";
 import * as $Modal from "./islands/Modal.tsx";
+import * as $RichMessageEditor from "./islands/RichMessageEditor.tsx";
 import * as $SessionStringAnalyzer from "./islands/SessionStringAnalyzer.tsx";
 import * as $SessionStringConverter from "./islands/SessionStringConverter.tsx";
 import * as $SessionStringGenerator from "./islands/SessionStringGenerator.tsx";
@@ -46,6 +48,7 @@ const manifest = {
     "./routes/filter-query-browser.tsx": $filter_query_browser,
     "./routes/index.tsx": $index,
     "./routes/inline-message-id-unpacker.tsx": $inline_message_id_unpacker,
+    "./routes/rich-message-preview.tsx": $rich_message_preview,
     "./routes/session-string-analyzer.tsx": $session_string_analyzer,
     "./routes/session-string-converter.tsx": $session_string_converter,
     "./routes/session-string-generator.tsx": $session_string_generator,
@@ -63,6 +66,7 @@ const manifest = {
     "./islands/FilterQueryBrowser.tsx": $FilterQueryBrowser,
     "./islands/InlineMessageIdUnpacker.tsx": $InlineMessageIdUnpacker,
     "./islands/Modal.tsx": $Modal,
+    "./islands/RichMessageEditor.tsx": $RichMessageEditor,
     "./islands/SessionStringAnalyzer.tsx": $SessionStringAnalyzer,
     "./islands/SessionStringConverter.tsx": $SessionStringConverter,
     "./islands/SessionStringGenerator.tsx": $SessionStringGenerator,
