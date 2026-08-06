@@ -8,9 +8,26 @@
 #
 # Requires: a built WASM artifact (scripts/build-wasm.sh), the native
 # goldens (scripts/capture-goldens.sh), google-chrome, python3, deno.
+#
+# --geometry-only: gate only on render failures and geometry (width/
+# height) mismatches; pixel-checksum differences are counted and
+# reported but do not fail the run. This is the CI gate: cross-host
+# pixel equality is a font-rasterization question (Qt-wasm FreeType vs
+# the golden capture host) that plan Phase 9 classifies separately, and
+# no threshold is configured — the count stays visible, nothing is
+# waived silently. Geometry IDs listed in
+# tests/wasm-known-differences.txt are reported as KNOWN instead of
+# failing (each line must carry a tracking note in that file).
 set -euo pipefail
 
+geometry_only=0
+if [[ "${1:-}" == "--geometry-only" ]]; then
+    geometry_only=1
+    shift || true
+fi
+
 renderer_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+known_diffs="${renderer_dir}/tests/wasm-known-differences.txt"
 artifact_dir="${renderer_dir}/build/wasm/ttr-renderer"
 goldens="${renderer_dir}/tests/native-goldens"
 work="$(mktemp -d)"
@@ -71,10 +88,19 @@ match = re.search(r"<pre id=\"out\">(.*?)</pre>", page, re.S)
 print(html.unescape(match.group(1)) if match else "{}")
 ' > "${work}/wasm-results.json"
 
-python3 - "${work}/wasm-results.json" "${goldens}" <<'PY'
-import json, struct, sys, zlib
+python3 - "${work}/wasm-results.json" "${goldens}" \
+    "${geometry_only}" "${known_diffs}" <<'PY'
+import json, os, struct, sys, zlib
 
 results_path, goldens = sys.argv[1], sys.argv[2]
+geometry_only = sys.argv[3] == "1"
+known = set()
+if os.path.exists(sys.argv[4]):
+    for line in open(sys.argv[4]):
+        line = line.split("#", 1)[0].strip()
+        if line:
+            known.add(line)
+
 payload = json.load(open(results_path))
 if not payload.get("ok"):
     print("WASM run failed:", payload.get("error", "unknown"))
@@ -86,6 +112,9 @@ compare = SourceFileLoader("compare", goldens + "/../../scripts/compare-renders.
 
 failures = 0
 checked = 0
+pixel_diffs = 0
+known_hits = 0
+diverged = set()
 for entry in payload["results"]:
     golden = f"{goldens}/{entry['id']}.png"
     try:
@@ -100,18 +129,41 @@ for entry in payload["results"]:
         failures += 1
         continue
     if (width, height) != (entry["width"], entry["height"]):
-        print(f"GEOMETRY: {entry['id']} native {width}x{height} "
-              f"!= wasm {entry['width']}x{entry['height']}")
-        failures += 1
+        if entry["id"] in known:
+            print(f"KNOWN GEOMETRY DIFF: {entry['id']} native {width}x{height} "
+                  f"!= wasm {entry['width']}x{entry['height']}")
+            known_hits += 1
+            diverged.add(entry["id"])
+        else:
+            print(f"GEOMETRY: {entry['id']} native {width}x{height} "
+                  f"!= wasm {entry['width']}x{entry['height']}")
+            failures += 1
         continue
     checksum = 0x811c9dc5
     for byte in pixels:
         checksum ^= byte
         checksum = (checksum * 0x01000193) & 0xFFFFFFFF
     if checksum != entry["checksum"]:
-        print(f"PIXELS: {entry['id']} checksum {checksum} != {entry['checksum']}")
-        failures += 1
+        if geometry_only:
+            pixel_diffs += 1
+        else:
+            print(f"PIXELS: {entry['id']} checksum {checksum} != {entry['checksum']}")
+            failures += 1
 
-print(f"compared {checked} renders, {failures} failures")
+summary = f"compared {checked} renders, {failures} failures"
+if geometry_only:
+    summary += (f", {pixel_diffs} pixel-only diffs (reported, not gating;"
+                " see plan Phase 9)")
+if known_hits:
+    summary += f", {known_hits} known geometry diffs"
+print(summary)
+
+# Keep the known-differences list honest: an entry that no longer
+# diverges (fixed, or a fixture that no longer exists) must be removed.
+stale = known - diverged
+if stale:
+    print("no-longer-diverging entries in wasm-known-differences.txt "
+          "(remove them):", ", ".join(sorted(stale)))
+    raise SystemExit(1)
 raise SystemExit(1 if failures else 0)
 PY

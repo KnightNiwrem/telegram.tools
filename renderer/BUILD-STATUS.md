@@ -37,8 +37,10 @@ Honest, current state of the implementation against the plan
 ## Native build (Phase 2)
 
 The pinned tree **configures and generates** on this dev host with the
-harness hook. Known dev-host requirements beyond apt packages (all
-machine-local, not committed):
+harness hook. The dev-host requirements beyond apt packages are now
+captured as a script — `scripts/setup-ci-host.sh` (apt set, ada v2.9.2
+and rnnoise v0.2 from source, shim CMake configs) — used by CI and
+usable on any fresh Ubuntu 24.04+ machine. Originally machine-local:
 
 - `ada` and `rnnoise` built from source into `/usr/local` (no Ubuntu
   packages).
@@ -113,12 +115,43 @@ Chrome and compares against the committed native goldens:
   320×55). Narrowed down: both render the same content with the same line
   wrapping (quote on two lines, credit on one); the 15px is vertical
   spacing around the credit. Still open.
-- **Pixels: 177 of 213 differ.** These are font-rasterization differences
+- **Pixels: 176 of 213 differ.** These are font-rasterization differences
   between Qt-wasm's bundled FreeType and the host's, which plan §3 and
   Phase 9 classify as a raster-only difference class. They are *not*
   waived: no pixel threshold is configured, the comparison reports every
   difference, and establishing the tolerance requires the pinned-Qt
   reference profile that is still outstanding.
+
+The CI gate is `scripts/verify-wasm.sh --geometry-only`: render failures
+and geometry mismatches fail the build; pixel-checksum differences are
+counted and reported without gating (no threshold is configured — see
+above); the one known geometry difference is listed with its tracking
+note in `tests/wasm-known-differences.txt`, and an entry that stops
+diverging fails the run until removed.
+
+## Continuous integration (GitHub Actions)
+
+`.github/workflows/renderer-wasm.yml` (push to `renderer/**` on
+`main`/`wasm-rich-message-renderer`, or manual dispatch) reproduces the
+build on a stock `ubuntu-24.04` runner:
+
+1. shallow submodule checkout of the pinned tree;
+2. `scripts/setup-ci-host.sh` — the scripted form of the former
+   machine-local setup;
+3. Qt 6.9.2 via aqtinstall: `linux_gcc_64` (+`qtshadertools` for qsb)
+   as host Qt and `wasm_singlethread`, so the host Qt version matches
+   the pinned Qt-wasm exactly (runner distro Qt is too old for the
+   pinned tree); emsdk 3.1.70; both cached, compiles through ccache;
+4. `build-native.sh --codegen-only` — only the host code generators the
+   superbuild imports (`codegen_style`/`lang`/`emoji`), not the full
+   native host;
+5. `build-wasm.sh`, deno tests, `verify-wasm.sh --geometry-only`
+   against the committed goldens;
+6. uploads `ttr-renderer.{js,wasm}` as a build artifact.
+
+The full native host + golden recapture stays a manual/dev-host flow
+(goldens are committed); publishing the artifact to releases or a CDN
+is not wired up yet.
 
 ### WebP emoji sprites
 

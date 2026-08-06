@@ -11,7 +11,28 @@ set -euo pipefail
 
 renderer_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 upstream="${renderer_dir}/upstream/tdesktop"
-build_dir="${renderer_dir}/build/native"
+build_dir="${TTR_NATIVE_BUILD_DIR:-${renderer_dir}/build/native}"
+
+# Overridable toolchain locations (defaults match the distro-Qt dev
+# host; CI points both at an aqtinstall Qt so the host Qt version
+# matches the pinned Qt-wasm exactly — see .github/workflows).
+#   TTR_QT_HOST      Qt prefix, e.g. $HOME/qt-wasm/6.9.2/gcc_64
+#   QSB_EXECUTABLE   qsb path (default /usr/lib/qt6/bin/qsb, or
+#                    $TTR_QT_HOST/bin/qsb when TTR_QT_HOST is set)
+qt_host="${TTR_QT_HOST:-}"
+if [[ -n "${qt_host}" ]]; then
+    qsb="${QSB_EXECUTABLE:-${qt_host}/bin/qsb}"
+else
+    qsb="${QSB_EXECUTABLE:-/usr/lib/qt6/bin/qsb}"
+fi
+
+# --codegen-only builds just the host code generators the WASM
+# superbuild imports (codegen_style/lang/emoji); configure is identical.
+targets=(ttr_native_host)
+if [[ "${1:-}" == "--codegen-only" ]]; then
+    targets=(codegen_style codegen_lang codegen_emoji)
+    shift || true
+fi
 
 if [[ "${1:-}" == "--deps" ]]; then
     sudo apt-get install -y \
@@ -76,9 +97,14 @@ cmake -S "${upstream}" -B "${build_dir}" -G Ninja \
     -DDESKTOP_APP_DISABLE_AUTOUPDATE=ON \
     -DDESKTOP_APP_DISABLE_CRASH_REPORTS=ON \
     -DDESKTOP_APP_USE_PACKAGED=ON \
-    -DQSB_EXECUTABLE=/usr/lib/qt6/bin/qsb \
+    -DQSB_EXECUTABLE="${qsb}" \
+    ${qt_host:+-DCMAKE_PREFIX_PATH="${qt_host}"} \
     -DTDESKTOP_RENDERER_HARNESS_DIR="${renderer_dir}/cpp"
 
-cmake --build "${build_dir}" --target ttr_native_host "$@"
+cmake --build "${build_dir}" --target "${targets[@]}" "$@"
 
-echo "native host: ${build_dir}/ttr_native_host"
+if [[ "${targets[0]}" == "ttr_native_host" ]]; then
+    echo "native host: ${build_dir}/ttr_native_host"
+else
+    echo "host code generators: ${build_dir}/Telegram/codegen/codegen/"
+fi

@@ -52,9 +52,20 @@ cp renderer/dist/ttr-renderer.{js,wasm} static/rich-message-renderer/
 deno task start   # -> /rich-message-preview
 ```
 
-The artifact (25 MB, 10.2 MB gzipped) is not committed; `static/` and
+The artifact (34.5 MB, ~13 MB gzipped) is not committed; `static/` and
 `renderer/dist/` are gitignored. `scripts/verify-wasm.sh` compares the
-browser output against the native goldens.
+browser output against the native goldens (`--geometry-only` gates on
+render failures and geometry only, with known differences listed in
+`tests/wasm-known-differences.txt`).
+
+## Continuous integration
+
+`.github/workflows/renderer-wasm.yml` builds the artifact on a stock
+`ubuntu-24.04` runner and uploads it as a build artifact:
+`scripts/setup-ci-host.sh` (apt deps, source-built ada/rnnoise, shim
+CMake configs) → aqtinstall Qt 6.9.2 (host + wasm) + emsdk 3.1.70 →
+`build-native.sh --codegen-only` (host code generators only) →
+`build-wasm.sh` → deno tests + `verify-wasm.sh --geometry-only`.
 
 ## Native host
 

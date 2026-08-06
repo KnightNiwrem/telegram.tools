@@ -1,0 +1,133 @@
+# Builds the rich-message renderer WASM artifact (renderer/, GPL-3.0)
+# from the pinned TDesktop tree and verifies it against the committed
+# native goldens. See renderer/BUILD-STATUS.md for the phase status and
+# renderer/scripts/ for the build steps this workflow drives.
+#
+# Toolchain pins (must move together):
+#   Qt 6.9.2 wasm_singlethread  <->  emsdk 3.1.70 (Qt-wasm's compiler)
+#   host Qt 6.9.2 (aqtinstall)  ->   host code generators + qsb
+name: renderer-wasm
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, wasm-rich-message-renderer]
+    paths:
+      - "renderer/**"
+      - ".github/workflows/renderer-wasm.yml"
+
+env:
+  QT_VERSION: 6.9.2
+  EMSDK_VERSION: 3.1.70
+  QT_ROOT: /home/runner/qt-wasm
+  CMAKE_C_COMPILER_LAUNCHER: ccache
+  CMAKE_CXX_COMPILER_LAUNCHER: ccache
+  CCACHE_DIR: /home/runner/.ccache
+  CCACHE_MAXSIZE: 4G
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    steps:
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet \
+            /opt/ghc /usr/local/.ghcup
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - name: Check out pinned submodules (shallow)
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive --depth 1 --jobs 4 \
+            || git submodule update --init --recursive --jobs 4
+
+      - name: Install host dependencies (apt + ada + rnnoise + shims)
+        run: renderer/scripts/setup-ci-host.sh
+
+      - name: Install ccache
+        run: sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.ccache
+          key: renderer-ccache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: renderer-ccache-${{ runner.os }}-
+
+      - name: Cache Qt (host + wasm)
+        id: cache-qt
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/qt-wasm
+          key: qt-${{ env.QT_VERSION }}-gcc64-shadertools-wasm-singlethread
+
+      - name: Install Qt via aqtinstall
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        run: |
+          pipx install aqtinstall
+          # Host Qt: code generators link against it; qtshadertools
+          # provides the qsb the configure step wants.
+          aqt install-qt linux desktop "$QT_VERSION" linux_gcc_64 \
+            -m qtshadertools -O "$QT_ROOT"
+          # Qt for WebAssembly (single-threaded; matches the superbuild).
+          aqt install-qt all_os wasm "$QT_VERSION" wasm_singlethread \
+            -O "$QT_ROOT"
+
+      - name: Cache emsdk
+        id: cache-emsdk
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/emsdk
+          key: emsdk-${{ env.EMSDK_VERSION }}
+
+      - name: Install emsdk
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk \
+            "$HOME/emsdk"
+          "$HOME/emsdk/emsdk" install "$EMSDK_VERSION"
+
+      - name: Activate emsdk
+        run: |
+          "$HOME/emsdk/emsdk" activate "$EMSDK_VERSION"
+
+      - name: Build host code generators (native, codegen-only)
+        run: |
+          TTR_QT_HOST="$QT_ROOT/$QT_VERSION/gcc_64" \
+            renderer/scripts/build-native.sh --codegen-only
+
+      - name: Build WASM artifact
+        run: |
+          source "$HOME/emsdk/emsdk_env.sh"
+          QT_WASM_ROOT="$QT_ROOT/$QT_VERSION" renderer/scripts/build-wasm.sh
+          ls -l renderer/dist/
+          gzip -k -9 renderer/dist/ttr-renderer.wasm
+          ls -l renderer/dist/ttr-renderer.wasm.gz
+          rm renderer/dist/ttr-renderer.wasm.gz
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: TypeScript tests
+        run: deno test --allow-read renderer/tests/
+
+      - name: Verify against native goldens (geometry gate)
+        run: renderer/scripts/verify-wasm.sh --geometry-only
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttr-renderer-${{ github.sha }}
+          path: |
+            renderer/dist/ttr-renderer.js
+            renderer/dist/ttr-renderer.wasm
+          if-no-files-found: error
+          compression-level: 9
+
+      - name: ccache stats
+        if: always()
+        run: ccache -s || true
