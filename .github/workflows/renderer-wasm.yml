@@ -44,11 +44,11 @@ jobs:
           git submodule update --init --recursive --depth 1 --jobs 4 \
             || git submodule update --init --recursive --jobs 4
 
+      # setup-ci-host.sh installs ccache with the rest of the apt set;
+      # the CMAKE_*_COMPILER_LAUNCHER env above applies to every cmake
+      # build including ada's inside the setup script.
       - name: Install host dependencies (apt + ada + rnnoise + shims)
         run: renderer/scripts/setup-ci-host.sh
-
-      - name: Install ccache
-        run: sudo apt-get install -y ccache
 
       - name: Cache ccache
         uses: actions/cache@v4

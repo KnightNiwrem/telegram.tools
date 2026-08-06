@@ -35,7 +35,7 @@ trap 'rm -rf "${work}"' EXIT
 if [[ "${TTR_SKIP_APT:-0}" != "1" ]]; then
     ${sudo} apt-get update
     ${sudo} apt-get install -y \
-        g++ cmake ninja-build pkg-config git curl wget unzip python3 \
+        g++ cmake ninja-build ccache pkg-config git curl wget unzip python3 \
         autoconf automake libtool \
         libssl-dev zlib1g-dev libopus-dev \
         libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
