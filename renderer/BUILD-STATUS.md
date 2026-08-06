@@ -11,7 +11,8 @@ Honest, current state of the implementation against the plan
 | Phase 1 — fixture corpus | **Done for the input side.** 76 fixtures covering all 21 `InputRichBlock` kinds, all inline entity forms, layout edge cases, and over-limit inputs; 93 deno tests pass. Native golden captures require the native host (below); `scripts/capture-goldens.sh` is ready. |
 | Phase 4 (TS half) — schema/contract | **Done.** Canonical JSON Schema v1, TS model + limits validator, versioned C ABI defined on both sides (`js/sdk/module.ts` ↔ `cpp/wasm-host/ttr_abi.h`). |
 | Phase 6 — grammY adapter | **Done and tested** at `grammy_types@v4.0.0`. Exhaustive union handling with compile-time guards, source-path diagnostics, media handles. |
-| Phase 11 — telegram.tools scaffold | **Done as scaffold.** `/rich-message-preview` route + `RichMessageEditor` island: three input modes, width/theme controls, debounced latest-wins loop, diagnostics panel, canonical inspector, honest no-artifact state. |
+| Phase 3 — Qt/WASM build | **Done: the core feasibility proof holds.** The artifact builds through a dedicated Emscripten superbuild (`cpp/wasm-superbuild`, since desktop-app's cmake has no Emscripten platform branch) and renders in headless Chrome. `/rich-message-preview` shows real TDesktop output: headings, bold, spoiler particles, bullet lists, task checkboxes. |
+| Phase 11 — telegram.tools scaffold | **Done as scaffold, now with live pixels.** `/rich-message-preview` route + `RichMessageEditor` island: three input modes, width/theme controls, debounced latest-wins loop, diagnostics panel, canonical inspector, honest no-artifact state. |
 
 ## Extraction findings that supersede the plan text
 
@@ -82,17 +83,10 @@ full-corpus golden capture is the tripwire, and it passes clean.
   build), ASan/UBSan runs, and pinned-Qt container goldens. The harness
   renders and its goldens are recorded, but they are not yet certified
   against the reference client.
-- **Phase 3 — Qt/WASM build**: probed on 2026-08-06 with emsdk (latest)
-  and Qt 6.9.2 `wasm_singlethread` (aqtinstall). `emcmake cmake` on the
-  pinned tree fails immediately at `cmake/options.cmake:25` — **"Unknown
-  platform type"**: desktop-app's cmake layer has no Emscripten platform
-  branch, so no source compiles until the platform detection, per-platform
-  external-dependency selection (openssl/ffmpeg/glib have no WASM story;
-  microtex/cmark-gfm/prisma should cross-compile), and Qt-wasm glue are
-  ported. This confirms the plan's framing of Phase 3 as its own
-  retire-the-risk effort; the sessionless C++ core itself is
-  toolchain-agnostic and `scripts/build-wasm.sh` encodes the intended
-  invocation. The escalation path in plan Phase 3 applies unchanged.
+- **Phase 3 remainder**: pixel-level fidelity (below), binary-size work
+  (25 MB raw / 10.2 MB gzipped), Firefox and WebKit runs, and the
+  performance measurements the plan asks for (cold init, warm render,
+  memory high-water).
 - **Phase 5** block-family fidelity matrix (needs goldens).
 - **Phase 7** HTML/Markdown import inside the renderer: the sessionless
   seam below `BlocksFromHtmlSource` (`TextUtilities::BlocksFromHtml` +
@@ -106,6 +100,22 @@ full-corpus golden capture is the tripwire, and it passes clean.
   (light) palette and emits `renderer.theme-unavailable` for dark until
   embedded night-palette loading is wired.
 - **Phases 9, 10, 12, 13, 14** as described in the plan.
+
+## Native vs WASM comparison (plan Phase 3 verification)
+
+`scripts/verify-wasm.sh` renders every blocks-mode fixture in headless
+Chrome and compares against the committed native goldens:
+
+- **Geometry: 212 of 213 identical.** Same widths, heights, and therefore
+  the same line breaking and block layout as the native harness. The one
+  exception is `block-pullquote-credit` at 320px (native 320×70, WASM
+  320×55) — an open item, not yet diagnosed.
+- **Pixels: 177 of 213 differ.** These are font-rasterization differences
+  between Qt-wasm's bundled FreeType and the host's, which plan §3 and
+  Phase 9 classify as a raster-only difference class. They are *not*
+  waived: no pixel threshold is configured, the comparison reports every
+  difference, and establishing the tolerance requires the pinned-Qt
+  reference profile that is still outstanding.
 
 ## Determinism check
 

@@ -94,7 +94,6 @@ if (EMSCRIPTEN)
         # app-only editor/box symbols resolve to traps; the smoke render is
         # the tripwire. Symbols the render path needs are defined for real
         # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp).
-        --profiling-funcs
     )
     set_target_properties(ttr_wasm_host PROPERTIES
         OUTPUT_NAME ttr-renderer

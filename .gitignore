@@ -19,3 +19,7 @@ renderer/tests/diffs/
 # WASM superbuild fetched third-party (build-wasm.sh downloads these)
 renderer/cpp/wasm-superbuild/third_party/ada/
 renderer/cpp/wasm-superbuild/third_party/boost-headers/
+
+# Renderer artifact: built by renderer/scripts/build-wasm.sh, not committed
+# (25MB WASM; see renderer/README.md for how to produce and deploy it).
+static/rich-message-renderer/

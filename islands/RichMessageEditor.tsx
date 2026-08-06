@@ -99,7 +99,10 @@ export function RichMessageEditor() {
   );
 
   useEffect(() => {
-    RichMessageRenderer.load({ glueUrl: RENDERER_GLUE_URL })
+    RichMessageRenderer.load({
+      glueUrl: RENDERER_GLUE_URL,
+      locateFile: (path) => `/rich-message-renderer/${path}`,
+    })
       .then((loaded) => {
         renderer.current = loaded;
         rendererStatus.value = "ready";

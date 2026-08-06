@@ -42,6 +42,20 @@ including what is verified, what compiles, and what remains.
 deno test --allow-read renderer/tests/   # adapter + schema + limits tests
 ```
 
+## WASM artifact
+
+```sh
+# emsdk must be activated at Qt-wasm's version (3.1.70 for Qt 6.9.2);
+# a native build must exist first (host code generators).
+renderer/scripts/build-wasm.sh
+cp renderer/dist/ttr-renderer.{js,wasm} static/rich-message-renderer/
+deno task start   # -> /rich-message-preview
+```
+
+The artifact (25 MB, 10.2 MB gzipped) is not committed; `static/` and
+`renderer/dist/` are gitignored. `scripts/verify-wasm.sh` compares the
+browser output against the native goldens.
+
 ## Native host
 
 ```sh
