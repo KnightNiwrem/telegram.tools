@@ -14,7 +14,14 @@ on:
     branches: [main, wasm-rich-message-renderer]
     paths:
       - "renderer/**"
+      # The lock-bump commit this workflow pushes must not retrigger it.
+      - "!renderer/artifact.lock.json"
       - ".github/workflows/renderer-wasm.yml"
+
+# contents: write — the publish step creates a release and pushes the
+# artifact-lock bump commit.
+permissions:
+  contents: write
 
 env:
   QT_VERSION: 6.9.2
@@ -127,6 +134,47 @@ jobs:
             renderer/dist/ttr-renderer.wasm
           if-no-files-found: error
           compression-level: 9
+
+      # Deployment handoff (see scripts/fetch-renderer-artifact.ts):
+      # publish the verified artifact as a GitHub release and pin it in
+      # renderer/artifact.lock.json. The deploy platform's build task
+      # (`deno task build`) downloads exactly the pinned bytes, so a
+      # deploy triggered mid-build still serves the previous verified
+      # artifact until the lock-bump commit lands.
+      - name: Publish release and pin artifact lock
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          wasm_sha=$(sha256sum renderer/dist/ttr-renderer.wasm | cut -d' ' -f1)
+          js_sha=$(sha256sum renderer/dist/ttr-renderer.js | cut -d' ' -f1)
+          if [ -f renderer/artifact.lock.json ] \
+              && grep -q "\"$wasm_sha\"" renderer/artifact.lock.json \
+              && grep -q "\"$js_sha\"" renderer/artifact.lock.json; then
+            echo "artifact byte-identical to the pinned release; nothing to do"
+            exit 0
+          fi
+          tag="renderer-wasm-${GITHUB_SHA::7}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" \
+              --target "$GITHUB_SHA" \
+              --title "Renderer WASM artifact ($tag)" \
+              --notes "Built and geometry-verified against the committed native goldens by renderer-wasm run ${GITHUB_RUN_ID}. License: GPL-3.0 with the OpenSSL exception (renderer/LICENSE); corresponding source: this repository at ${GITHUB_SHA} including the pinned tdesktop submodule." \
+              renderer/dist/ttr-renderer.js renderer/dist/ttr-renderer.wasm
+          fi
+          jq -n --arg repo "$GITHUB_REPOSITORY" --arg tag "$tag" \
+            --arg js "$js_sha" --arg wasm "$wasm_sha" \
+            '{repo: $repo, tag: $tag, files: {"ttr-renderer.js": $js, "ttr-renderer.wasm": $wasm}}' \
+            > renderer/artifact.lock.json
+          if git diff --quiet renderer/artifact.lock.json; then
+            echo "lock already pins $tag"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add renderer/artifact.lock.json
+          git commit -m "renderer: pin artifact $tag"
+          git pull --rebase origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
 
       - name: ccache stats
         if: always()

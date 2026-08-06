@@ -153,8 +153,19 @@ build on a stock `ubuntu-24.04` runner:
 6. uploads `ttr-renderer.{js,wasm}` as a build artifact.
 
 The full native host + golden recapture stays a manual/dev-host flow
-(goldens are committed); publishing the artifact to releases or a CDN
-is not wired up yet.
+(goldens are committed).
+
+After the verify gate, the workflow publishes the artifact as a GitHub
+release (`renderer-wasm-<shortsha>`) and pins it — release tag plus
+per-file sha256 — in `renderer/artifact.lock.json` via a bot commit
+(excluded from the workflow's own trigger paths). Deployment consumes
+the pin: `deno task build` first runs
+`scripts/fetch-renderer-artifact.ts`, which downloads the pinned
+release assets into `static/rich-message-renderer/` and verifies the
+hashes. A deploy platform that rebuilds on every push therefore always
+serves the exact bytes of the last *verified* renderer build — a deploy
+racing a 20-minute renderer CI run just keeps the previous pin until
+the lock-bump commit lands (and itself triggers the redeploy).
 
 ### WebP emoji sprites
 

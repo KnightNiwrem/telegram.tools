@@ -66,7 +66,11 @@ render failures and geometry only, with known differences listed in
 `scripts/setup-ci-host.sh` (apt deps, source-built ada/rnnoise, shim
 CMake configs) → aqtinstall Qt 6.9.2 (host + wasm) + emsdk 3.1.70 →
 `build-native.sh --codegen-only` (host code generators only) →
-`build-wasm.sh` → deno tests + `verify-wasm.sh --geometry-only`.
+`build-wasm.sh` → deno tests + `verify-wasm.sh --geometry-only` →
+publish as a GitHub release pinned in `renderer/artifact.lock.json`.
+Deployments fetch the pinned release at build time
+(`deno task fetch-renderer`, part of `deno task build`) instead of
+committing the artifact.
 
 ## Native host
 
