@@ -45,7 +45,9 @@ export interface RenderRequest {
   /** Logical pixels; canonical profile widths are 320, 480, 720. */
   viewportWidth: number;
   theme: RenderTheme;
-  /** Device pixel ratio; canonical profile uses 1. */
+  /** Device pixel ratio, 1..4; canonical profile uses 1. Layout stays in
+   * logical pixels — only the output bitmap is rendered at
+   * viewportWidth*scale. */
   scale: number;
   direction?: RenderDirection;
   interactionState?: InteractionState;
@@ -74,8 +76,13 @@ export interface HitTarget {
 }
 
 export interface RenderResult {
+  /** Physical pixels (viewportWidth*scale); logical size is width/scale.
+   * geometry and hitTargets stay in logical pixels. */
   width: number;
   height: number;
+  /** Device pixel ratio the bitmap was rendered at. Absent from artifacts
+   * that predate per-request scale (those always render at 1). */
+  scale?: number;
   /** Tightly packed RGBA, width*height*4 bytes (copied out of WASM memory). */
   rgba: Uint8Array;
   diagnostics: RenderDiagnostic[];

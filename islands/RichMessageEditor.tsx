@@ -68,6 +68,21 @@ Numbers are **up** and morale is ||complicated||.`;
 // output is deployed under static/rich-message-renderer/.
 const RENDERER_GLUE_URL = "/rich-message-renderer/ttr-renderer.js";
 
+function dimensionsLabel(result: RenderResult): string {
+  const scale = result.scale ?? 1;
+  const width = Math.round(result.width / scale);
+  const height = Math.round(result.height / scale);
+  return scale === 1
+    ? `${width}×${height}`
+    : `${width}×${height} @${Number(scale.toFixed(2))}x`;
+}
+
+/** Renderable device pixel ratio: the renderer accepts 1..4; cap the
+ * request at 3 to bound bitmap size on exotic displays. */
+function renderScale(): number {
+  return Math.min(Math.max(globalThis.devicePixelRatio ?? 1, 1), 3);
+}
+
 function severityColor(severity: RenderDiagnostic["severity"]): string {
   switch (severity) {
     case "error":
@@ -95,6 +110,7 @@ export function RichMessageEditor(
   const source = useSignal(EXAMPLE_BLOCKS);
   const width = useSignal(480);
   const theme = useSignal<"light" | "dark">("light");
+  const dpr = useSignal(renderScale());
   const diagnostics = useSignal<RenderDiagnostic[]>([]);
   const canonicalJson = useSignal("");
   const fidelityMode = useSignal<FidelityMode>("blocks");
@@ -133,7 +149,7 @@ export function RichMessageEditor(
         // Render the current input immediately: the debounced effect ran
         // before the renderer finished loading, so nothing else would
         // paint the initial preview until the user edits something.
-        update(mode.value, source.value, width.value, theme.value);
+        update(mode.value, source.value, width.value, theme.value, dpr.value);
       })
       .catch((error) => {
         rendererStatus.value = "unavailable";
@@ -147,6 +163,23 @@ export function RichMessageEditor(
     };
   }, []);
 
+  useEffect(() => {
+    // devicePixelRatio changes (browser zoom, moving between monitors)
+    // touch no input signal; a matchMedia for the current resolution
+    // fires exactly once when the ratio changes, so re-arm per change.
+    let media: MediaQueryList | undefined;
+    const arm = () => {
+      dpr.value = renderScale();
+      media?.removeEventListener("change", arm);
+      media = matchMedia(
+        `(resolution: ${globalThis.devicePixelRatio ?? 1}dppx)`,
+      );
+      media.addEventListener("change", arm);
+    };
+    arm();
+    return () => media?.removeEventListener("change", arm);
+  }, []);
+
   useSignalEffect(() => {
     // Track every input signal, then debounce; the SDK additionally applies
     // latest-request-wins across the WASM boundary.
@@ -154,9 +187,17 @@ export function RichMessageEditor(
     const currentSource = source.value;
     const currentWidth = width.value;
     const currentTheme = theme.value;
+    const currentScale = dpr.value;
     clearTimeout(debounce.current);
     debounce.current = setTimeout(
-      () => update(currentMode, currentSource, currentWidth, currentTheme),
+      () =>
+        update(
+          currentMode,
+          currentSource,
+          currentWidth,
+          currentTheme,
+          currentScale,
+        ),
       150,
     );
   });
@@ -166,6 +207,7 @@ export function RichMessageEditor(
     currentSource: string,
     currentWidth: number,
     currentTheme: "light" | "dark",
+    currentScale: number,
   ) {
     let content: RenderContent | null = null;
     const collected: RenderDiagnostic[] = [];
@@ -236,7 +278,10 @@ export function RichMessageEditor(
         content,
         viewportWidth: currentWidth,
         theme: currentTheme,
-        scale: 1,
+        // Hi-DPI displays get a crisp bitmap; layout is unaffected. The
+        // renderer echoes the scale it applied (older artifacts ignore
+        // the field), so the blit below trusts the result, not this.
+        scale: currentScale,
       })
       .then((result) => {
         renderResult.value = result;
@@ -397,7 +442,7 @@ export function RichMessageEditor(
               <div class="text-xs opacity-50">
                 {rendererVersion.value}
                 {renderResult.value !== null &&
-                  ` · ${renderResult.value.width}×${renderResult.value.height}`}
+                  ` · ${dimensionsLabel(renderResult.value)}`}
               </div>
             </>
           )}

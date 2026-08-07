@@ -12,7 +12,8 @@
 import type { RenderResult } from "./types.ts";
 
 export interface BlitOptions {
-  /** Device pixel ratio the result was rendered at (RenderRequest.scale). */
+  /** Overrides the device pixel ratio echoed by the result (renders from
+   * artifacts that predate per-request scale report none and display 1:1). */
   scale?: number;
 }
 
@@ -22,7 +23,7 @@ export function blitToCanvas(
   canvas: HTMLCanvasElement,
   options: BlitOptions = {},
 ): void {
-  const scale = options.scale ?? 1;
+  const scale = options.scale ?? result.scale ?? 1;
   canvas.width = result.width;
   canvas.height = result.height;
   canvas.style.width = `${result.width / scale}px`;

@@ -120,6 +120,18 @@ public:
 				u"renderer.viewport"_q,
 				u"viewportWidth must be within 1..4096"_q);
 		}
+		// Device pixel ratio: layout stays in logical pixels (identical
+		// line wrapping at any scale); only the output bitmap is rendered
+		// at viewportWidth*scale, via QImage::setDevicePixelRatio.
+		const auto rawScale = request.value(u"scale"_q);
+		const auto scale = rawScale.isUndefined() ? 1. : rawScale.toDouble();
+		if ((!rawScale.isUndefined() && !rawScale.isDouble())
+			|| scale < 1.
+			|| scale > 4.) {
+			return fail(
+				u"renderer.scale"_q,
+				u"scale must be a number within 1..4"_q);
+		}
 		const auto theme = request.value(u"theme"_q).toString();
 		if (theme == u"dark"_q) {
 			// Dark palette loading (embedded night theme) is a recorded
@@ -179,16 +191,31 @@ public:
 		}
 
 		const auto height = _article.resizeGetHeight(viewportWidth);
-		if (height <= 0 || height > 65536) {
+		if (height <= 0 || height * scale > 65536.) {
 			return fail(
 				u"renderer.layout"_q,
 				u"layout produced an invalid height"_q);
 		}
 		_article.setVisibleTopBottom(0, height);
 
-		auto image = QImage(
-			QSize(viewportWidth, height),
-			QImage::Format_ARGB32_Premultiplied);
+		// Bound the physical allocation to the worst case the viewport
+		// and height limits above already allow at scale 1 (4096 x
+		// 65536); high scales must not multiply it. A null image from a
+		// failed allocation must fail the render rather than report ok
+		// with an empty bitmap.
+		const auto physical = QSize(viewportWidth, height) * scale;
+		if (double(physical.width()) * physical.height() > 4096. * 65536.) {
+			return fail(
+				u"renderer.output-size"_q,
+				u"scaled output exceeds the maximum image area"_q);
+		}
+		auto image = QImage(physical, QImage::Format_ARGB32_Premultiplied);
+		if (image.isNull()) {
+			return fail(
+				u"renderer.allocation"_q,
+				u"pixel buffer allocation failed"_q);
+		}
+		image.setDevicePixelRatio(scale);
 		image.fill(st::historyComposeAreaBg->c);
 		{
 			auto p = Painter(&image);
@@ -212,7 +239,16 @@ public:
 			_article.paint(p, context);
 		}
 
-		output.image = image.convertToFormat(QImage::Format_RGBA8888);
+		// Same-depth conversion on an rvalue converts in place, so the
+		// peak stays one image; a null result (fallback-path allocation
+		// failure) must fail the render, not report ok.
+		output.image = std::move(image).convertToFormat(
+			QImage::Format_RGBA8888);
+		if (output.image.isNull()) {
+			return fail(
+				u"renderer.allocation"_q,
+				u"pixel buffer allocation failed"_q);
+		}
 		output.ok = true;
 
 		auto geometry = QJsonArray();
@@ -230,6 +266,9 @@ public:
 		metadata.insert(u"status"_q, u"ok"_q);
 		metadata.insert(u"width"_q, output.image.width());
 		metadata.insert(u"height"_q, output.image.height());
+		// width/height above are physical pixels (viewportWidth*scale);
+		// geometry and hit targets below stay in logical pixels.
+		metadata.insert(u"scale"_q, scale);
 		metadata.insert(u"diagnostics"_q, diagnostics);
 		metadata.insert(u"geometry"_q, geometry);
 		metadata.insert(u"hitTargets"_q, QJsonArray());
