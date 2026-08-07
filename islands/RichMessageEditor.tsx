@@ -287,7 +287,7 @@ export function RichMessageEditor(
         renderResult.value = result;
         diagnostics.value = [...collected, ...result.diagnostics];
         if (canvas.current !== null && result.width > 0) {
-          blitToCanvas(result, canvas.current, { scale: result.scale ?? 1 });
+          blitToCanvas(result, canvas.current);
         }
       })
       .catch((error) => {
@@ -433,9 +433,7 @@ export function RichMessageEditor(
                     // which can be after the first render result arrived;
                     // paint it.
                     if (element !== null && renderResult.value !== null) {
-                      blitToCanvas(renderResult.value, element, {
-                        scale: renderResult.value.scale ?? 1,
-                      });
+                      blitToCanvas(renderResult.value, element);
                     }
                   }}
                   class="border border-border rounded-lg"
