@@ -1,0 +1,41 @@
+{
+  "id": "inline-italic",
+  "description": "Italic wrapper entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "This is ",
+          {
+            "type": "italic",
+            "text": "italic"
+          },
+          " text."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "This is italic text.",
+            "entities": [
+              {
+                "type": "italic",
+                "offset": 8,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

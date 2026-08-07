@@ -1,0 +1,4 @@
+[submodule "renderer/upstream/tdesktop"]
+	path = renderer/upstream/tdesktop
+	url = https://github.com/telegramdesktop/tdesktop.git
+	shallow = true

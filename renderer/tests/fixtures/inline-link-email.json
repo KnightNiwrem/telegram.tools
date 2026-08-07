@@ -1,0 +1,43 @@
+{
+  "id": "inline-link-email",
+  "description": "E-mail address entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Write to ",
+          {
+            "type": "email_address",
+            "text": "user@example.com",
+            "email_address": "user@example.com"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Write to user@example.com.",
+            "entities": [
+              {
+                "type": "email_address",
+                "emailAddress": "user@example.com",
+                "offset": 9,
+                "length": 16
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

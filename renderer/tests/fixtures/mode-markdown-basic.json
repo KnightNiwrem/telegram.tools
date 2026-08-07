@@ -1,0 +1,22 @@
+{
+  "id": "mode-markdown-basic",
+  "description": "Markdown content with an id-referenced media list passes through.",
+  "input": {
+    "markdown": "# Title\n\n**Bold** and _italic_.\n\n![](tg://video?id=clip)",
+    "media": [
+      {
+        "id": "clip",
+        "media": {
+          "type": "video",
+          "media": "https://telegram.org/example/video.mp4",
+          "width": 1280,
+          "height": 720
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "markdown",
+    "diagnostics": []
+  }
+}

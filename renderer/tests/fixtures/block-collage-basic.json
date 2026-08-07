@@ -1,0 +1,72 @@
+{
+  "id": "block-collage-basic",
+  "description": "Collage of two photos and a video with a caption and credit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "collage",
+        "blocks": [
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo2.jpg"
+            }
+          },
+          {
+            "type": "video",
+            "video": {
+              "type": "video",
+              "media": "https://telegram.org/example/video.mp4"
+            }
+          }
+        ],
+        "caption": {
+          "text": "Collage caption",
+          "credit": "Collage credit"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "collage",
+          "items": [
+            {
+              "ref": "m0",
+              "kind": "photo"
+            },
+            {
+              "ref": "m1",
+              "kind": "photo"
+            },
+            {
+              "ref": "m2",
+              "kind": "video"
+            }
+          ],
+          "caption": {
+            "text": {
+              "text": "Collage caption"
+            },
+            "credit": {
+              "text": "Collage credit"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "id": "edge-table-merged-cells",
+  "description": "Larger table exercising colspan and rowspan merges plus invisible (textless) cells.",
+  "input": {
+    "blocks": [
+      {
+        "type": "table",
+        "cells": [
+          [
+            {
+              "text": "A",
+              "is_header": true,
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "B",
+              "is_header": true,
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "C",
+              "is_header": true,
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "D",
+              "is_header": true,
+              "align": "left",
+              "valign": "top"
+            }
+          ],
+          [
+            {
+              "text": "wide",
+              "colspan": 3,
+              "align": "center",
+              "valign": "middle"
+            },
+            {
+              "text": "tall",
+              "rowspan": 3,
+              "align": "left",
+              "valign": "top"
+            }
+          ],
+          [
+            {
+              "text": "1",
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "block",
+              "colspan": 2,
+              "rowspan": 2,
+              "align": "center",
+              "valign": "bottom"
+            }
+          ],
+          [
+            {
+              "align": "left",
+              "valign": "top"
+            }
+          ]
+        ],
+        "is_bordered": true
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "table",
+          "rows": [
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "A"
+                  },
+                  "header": true
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "B"
+                  },
+                  "header": true
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "C"
+                  },
+                  "header": true
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "D"
+                  },
+                  "header": true
+                }
+              ]
+            },
+            {
+              "cells": [
+                {
+                  "align": "center",
+                  "valign": "middle",
+                  "text": {
+                    "text": "wide"
+                  },
+                  "colspan": 3
+                },
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "tall"
+                  },
+                  "rowspan": 3
+                }
+              ]
+            },
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "1"
+                  }
+                },
+                {
+                  "align": "center",
+                  "valign": "bottom",
+                  "text": {
+                    "text": "block"
+                  },
+                  "colspan": 2,
+                  "rowspan": 2
+                }
+              ]
+            },
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "top"
+                }
+              ]
+            }
+          ],
+          "bordered": true
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

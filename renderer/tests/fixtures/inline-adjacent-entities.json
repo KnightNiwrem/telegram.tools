@@ -1,0 +1,58 @@
+{
+  "id": "inline-adjacent-entities",
+  "description": "Adjacent sibling entities with no gap between their ranges.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          {
+            "type": "bold",
+            "text": "bold"
+          },
+          {
+            "type": "italic",
+            "text": "italic"
+          },
+          {
+            "type": "strikethrough",
+            "text": "struck"
+          },
+          " tail"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "bolditalicstruck tail",
+            "entities": [
+              {
+                "type": "bold",
+                "offset": 0,
+                "length": 4
+              },
+              {
+                "type": "italic",
+                "offset": 4,
+                "length": 6
+              },
+              {
+                "type": "strikethrough",
+                "offset": 10,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

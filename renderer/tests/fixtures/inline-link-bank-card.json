@@ -1,0 +1,42 @@
+{
+  "id": "inline-link-bank-card",
+  "description": "Bank card number entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Card: ",
+          {
+            "type": "bank_card_number",
+            "text": "4242 4242 4242 4242",
+            "bank_card_number": "4242424242424242"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Card: 4242 4242 4242 4242",
+            "entities": [
+              {
+                "type": "bank_card_number",
+                "bankCardNumber": "4242424242424242",
+                "offset": 6,
+                "length": 19
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

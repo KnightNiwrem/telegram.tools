@@ -1,0 +1,41 @@
+{
+  "id": "inline-code",
+  "description": "Inline monowidth code entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Run ",
+          {
+            "type": "code",
+            "text": "deno test"
+          },
+          " to verify."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Run deno test to verify.",
+            "entities": [
+              {
+                "type": "code",
+                "offset": 4,
+                "length": 9
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

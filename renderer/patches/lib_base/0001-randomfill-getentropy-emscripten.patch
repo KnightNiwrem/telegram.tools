@@ -1,0 +1,61 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] RandomFill/RandomAddSeed without OpenSSL under Emscripten
+
+WebAssembly builds carry no OpenSSL; getentropy is backed by the
+browser's crypto.getRandomValues (256-byte chunks), which neither needs
+nor accepts external seeding.
+---
+diff --git a/base/random.cpp b/base/random.cpp
+index c32f8a3..de40bf9 100644
+--- a/base/random.cpp
++++ b/base/random.cpp
+@@ -6,9 +6,13 @@
+ //
+ #include "base/random.h"
+ 
++#ifdef __EMSCRIPTEN__
++#include <unistd.h>
++#else // __EMSCRIPTEN__
+ extern "C" {
+ #include <openssl/rand.h>
+ } // extern "C"
++#endif // __EMSCRIPTEN__
+ 
+ namespace base {
+ namespace {
+@@ -32,11 +36,24 @@ int RandomIndex(int count, Next &&next) {
+ } // namespace
+ 
+ void RandomFill(bytes::span bytes) {
++#ifdef __EMSCRIPTEN__
++	// WebAssembly builds carry no OpenSSL; Emscripten's getentropy is
++	// backed by the browser's crypto.getRandomValues (max 256 bytes per
++	// call, so fill in chunks).
++	auto offset = std::size_t(0);
++	while (offset < bytes.size()) {
++		const auto chunk = std::min(bytes.size() - offset, std::size_t(256));
++		const auto result = ::getentropy(bytes.data() + offset, chunk);
++		Ensures(result == 0);
++		offset += chunk;
++	}
++#else // __EMSCRIPTEN__
+ 	const auto result = RAND_bytes(
+ 		reinterpret_cast<unsigned char*>(bytes.data()),
+ 		bytes.size());
+ 
+ 	Ensures(result);
++#endif // __EMSCRIPTEN__
+ }
+ 
+ int RandomIndex(int count) {
+@@ -48,7 +65,10 @@ int RandomIndex(int count, BufferedRandom<uint32> buffered) {
+ }
+ 
+ void RandomAddSeed(bytes::const_span bytes) {
++#ifndef __EMSCRIPTEN__
++	// The browser's CSPRNG neither needs nor accepts external seeding.
+ 	RAND_seed(bytes.data(), bytes.size());
++#endif // !__EMSCRIPTEN__
+ }
+ 
+ } // namespace base

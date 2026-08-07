@@ -1,0 +1,173 @@
+{
+  "id": "edge-nested-lists",
+  "description": "Lists nested three levels deep, mixing task and ordered items.",
+  "input": {
+    "blocks": [
+      {
+        "type": "list",
+        "items": [
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "level one"
+              },
+              {
+                "type": "list",
+                "items": [
+                  {
+                    "blocks": [
+                      {
+                        "type": "paragraph",
+                        "text": "level two"
+                      },
+                      {
+                        "type": "list",
+                        "items": [
+                          {
+                            "blocks": [
+                              {
+                                "type": "paragraph",
+                                "text": "level three"
+                              }
+                            ],
+                            "value": 1,
+                            "type": "a"
+                          },
+                          {
+                            "blocks": [
+                              {
+                                "type": "paragraph",
+                                "text": "level three again"
+                              }
+                            ],
+                            "value": 2,
+                            "type": "a"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "blocks": [
+                      {
+                        "type": "paragraph",
+                        "text": "level two task"
+                      }
+                    ],
+                    "has_checkbox": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "another level one"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "list",
+          "ordered": false,
+          "items": [
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "level one"
+                  }
+                },
+                {
+                  "kind": "list",
+                  "ordered": false,
+                  "items": [
+                    {
+                      "blocks": [
+                        {
+                          "kind": "paragraph",
+                          "text": {
+                            "text": "level two"
+                          }
+                        },
+                        {
+                          "kind": "list",
+                          "ordered": true,
+                          "items": [
+                            {
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": {
+                                    "text": "level three"
+                                  }
+                                }
+                              ],
+                              "value": 1,
+                              "numberingType": "a"
+                            },
+                            {
+                              "blocks": [
+                                {
+                                  "kind": "paragraph",
+                                  "text": {
+                                    "text": "level three again"
+                                  }
+                                }
+                              ],
+                              "value": 2,
+                              "numberingType": "a"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "blocks": [
+                        {
+                          "kind": "paragraph",
+                          "text": {
+                            "text": "level two task"
+                          }
+                        }
+                      ],
+                      "taskState": "unchecked"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "blocks": [
+                {
+                  "kind": "paragraph",
+                  "text": {
+                    "text": "another level one"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "info",
+        "code": "adapter.list-order-inferred"
+      }
+    ]
+  }
+}

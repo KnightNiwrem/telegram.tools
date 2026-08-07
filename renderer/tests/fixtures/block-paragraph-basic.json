@@ -1,0 +1,27 @@
+{
+  "id": "block-paragraph-basic",
+  "description": "A single plain paragraph block.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "Hello, rich world."
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Hello, rich world."
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

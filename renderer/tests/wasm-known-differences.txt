@@ -1,0 +1,9 @@
+# Known native-vs-WASM geometry differences, one render ID per line.
+# Every entry MUST carry a note explaining the open issue; entries that
+# stop diverging fail verify-wasm.sh until removed (list hygiene).
+#
+# Tracked in BUILD-STATUS.md ("Native vs WASM comparison").
+
+# Same content, same line wrapping (quote on two lines, credit on one);
+# the 15px is vertical spacing around the credit. Cause not yet found.
+block-pullquote-credit.w320.light  # native 320x70, wasm 320x55

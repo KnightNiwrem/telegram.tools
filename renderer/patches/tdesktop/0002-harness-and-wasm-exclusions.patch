@@ -1,0 +1,99 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] Harness/WebAssembly source exclusions and lazy locale
+
+- td_ui: skip tgcalls/webrtc pieces in harness builds, and under
+  Emscripten also the ffmpeg clip player and stripe card editor.
+- attach_prepare.h: QSemaphore include guarded (absent in
+  single-threaded Qt-wasm; unused by the header).
+- earn_format: the file-scope QLocale() ran during static init, before
+  embind's builtin registrations, tripping QTBUG-131279. Lazy by
+  necessity, behavior-identical everywhere.
+---
+diff --git a/Telegram/SourceFiles/info/channel_statistics/earn/earn_format.cpp b/Telegram/SourceFiles/info/channel_statistics/earn/earn_format.cpp
+index 69ece36..e22228c 100644
+--- a/Telegram/SourceFiles/info/channel_statistics/earn/earn_format.cpp
++++ b/Telegram/SourceFiles/info/channel_statistics/earn/earn_format.cpp
+@@ -15,7 +15,17 @@ namespace {
+ constexpr auto kMinorPartLength = 9;
+ constexpr auto kMaxChoppedZero = kMinorPartLength - 2;
+ constexpr auto kZero = QChar('0');
+-const auto DecimalPoint = QString() + QLocale().decimalPoint();
++// Lazy by necessity under Emscripten: constructing a QLocale during
++// static initialization reaches Qt's navigatorLanguages(), which uses
++// embind before embind's own builtin type registrations (themselves
++// static constructors) have run - QTBUG-131279. Deferring to first use
++// is behavior-identical on every platform.
++[[nodiscard]] const QString &DecimalPointValue() {
++	static const auto result = QString() + QLocale().decimalPoint();
++	return result;
++}
++
++#define DecimalPoint DecimalPointValue()
+ 
+ using EarnInt = Data::EarnInt;
+ 
+diff --git a/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h b/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
+index b408905..a124094 100644
+--- a/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
++++ b/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
+@@ -11,7 +11,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "ui/chat/attach/attach_send_files_way.h"
+ #include "ui/rect_part.h"
+ 
++#ifndef __EMSCRIPTEN__
++// Unused in this header; kept for desktop translation units that rely on
++// the transitive include. Single-threaded Qt-wasm ships no QSemaphore.
+ #include <QtCore/QSemaphore>
++#endif // !__EMSCRIPTEN__
+ #include <deque>
+ 
+ class QPainter;
+diff --git a/Telegram/cmake/td_ui.cmake b/Telegram/cmake/td_ui.cmake
+index 65fbe61..108c3d6 100644
+--- a/Telegram/cmake/td_ui.cmake
++++ b/Telegram/cmake/td_ui.cmake
+@@ -687,16 +687,42 @@ PUBLIC
+     ${src_loc}
+ )
+ 
++if (TDESKTOP_RENDERER_HARNESS_DIR)
++    # Harness builds have no tg_owt/WebRTC; the round video recorder and
++    # the desktop-capture source picker are the only td_ui pieces needing
++    # tgcalls, and nothing in the sessionless renderer uses them.
++    remove_target_sources(td_ui ${src_loc}
++        calls/group/ui/desktop_capture_choose_source.cpp
++        ui/controls/round_video_recorder.cpp
++    )
++    if (EMSCRIPTEN)
++        # ffmpeg (clip player) and stripe (card editor) have no WASM story
++        # and are unused by the sessionless renderer.
++        remove_target_sources(td_ui ${src_loc}
++            media/clip/media_clip_ffmpeg.cpp
++            media/clip/media_clip_reader.cpp
++            payments/ui/payments_edit_card.cpp
++        )
++    endif()
++    # lib_webrtc headers are tg_owt-free and remain includable; only its
++    # implementations (and thus the link) need the real WebRTC tree.
++    target_include_directories(td_ui PRIVATE ${src_loc}/../lib_webrtc)
++else()
++    target_link_libraries(td_ui
++    PRIVATE
++        tdesktop::lib_tgcalls
++        desktop-app::lib_webrtc
++    )
++endif()
++
+ target_link_libraries(td_ui
+ PUBLIC
+     tdesktop::td_lang
+     desktop-app::lib_ui
+     desktop-app::lib_lottie
+ PRIVATE
+-    tdesktop::lib_tgcalls
+     desktop-app::lib_ffmpeg
+     desktop-app::lib_webview
+-    desktop-app::lib_webrtc
+     desktop-app::lib_spellcheck
+     desktop-app::lib_stripe
+     desktop-app::external_kcoreaddons

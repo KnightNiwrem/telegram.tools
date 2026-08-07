@@ -1,0 +1,41 @@
+{
+  "id": "inline-underline",
+  "description": "Underline wrapper entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "This is ",
+          {
+            "type": "underline",
+            "text": "underlined"
+          },
+          " text."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "This is underlined text.",
+            "entities": [
+              {
+                "type": "underline",
+                "offset": 8,
+                "length": 10
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

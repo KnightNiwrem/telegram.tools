@@ -92,6 +92,13 @@ const sections = [
         name: "Filter Query Browser",
         description: "Browse through grammY\u2019s filter queries.",
       },
+      {
+        href: "/rich-message-preview",
+        icon: <FileText />,
+        name: "Rich Message Preview",
+        description:
+          "Preview rich messages with Telegram Desktop\u2019s own renderer.",
+      },
     ],
   },
 ];

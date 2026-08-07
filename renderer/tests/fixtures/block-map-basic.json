@@ -1,0 +1,47 @@
+{
+  "id": "block-map-basic",
+  "description": "Map block with caption; within size and ratio limits.",
+  "input": {
+    "blocks": [
+      {
+        "type": "map",
+        "location": {
+          "latitude": 41.9,
+          "longitude": 12.5
+        },
+        "zoom": 14,
+        "width": 800,
+        "height": 600,
+        "caption": {
+          "text": "Rome",
+          "credit": "Map credit"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "map",
+          "latitude": 41.9,
+          "longitude": 12.5,
+          "zoom": 14,
+          "width": 800,
+          "height": 600,
+          "caption": {
+            "text": {
+              "text": "Rome"
+            },
+            "credit": {
+              "text": "Map credit"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

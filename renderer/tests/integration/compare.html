@@ -1,0 +1,61 @@
+<!doctype html>
+<!-- Part of the telegram.tools rich-message renderer (GPL-3.0).
+     Phase 3 verification: renders a list of canonical fixtures through the
+     WASM artifact and reports dimensions plus a pixel checksum, so the
+     browser output can be compared against the native goldens
+     (scripts/verify-wasm.sh drives this headlessly). -->
+<html>
+<head><meta charset="utf-8"><title>ttr compare</title></head>
+<body>
+<pre id="out">running</pre>
+<script type="module">
+const results = [];
+const finish = (extra) => {
+  document.getElementById("out").textContent =
+    JSON.stringify({ results, ...extra });
+  window.__ttrDone = true;
+};
+try {
+  const requests = await (await fetch("./requests.json")).json();
+  const { default: createTtrModule } = await import("./ttr-renderer.js");
+  const module = await createTtrModule({ locateFile: (path) => path });
+  const abi = {
+    initialize: module.cwrap("ttr_initialize", "number", []),
+    create: module.cwrap("ttr_create", "number", []),
+    render: module.cwrap("ttr_render", "number", ["number", "string"]),
+  };
+  if (abi.initialize() !== 0) throw new Error("initialize failed");
+  const handle = abi.create();
+  for (const entry of requests) {
+    const pointer = abi.render(handle, JSON.stringify(entry.request));
+    const result = JSON.parse(module.UTF8ToString(pointer));
+    let checksum = 0;
+    if (result.status === "ok") {
+      const pixels = module.HEAPU8.subarray(
+        result.pixelsOffset,
+        result.pixelsOffset + result.pixelsSize,
+      );
+      // FNV-1a over the RGBA buffer.
+      let hash = 0x811c9dc5;
+      for (let i = 0; i < pixels.length; i++) {
+        hash ^= pixels[i];
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+      }
+      checksum = hash;
+    }
+    results.push({
+      id: entry.id,
+      status: result.status,
+      width: result.width ?? 0,
+      height: result.height ?? 0,
+      checksum,
+      diagnostics: result.diagnostics ?? [],
+    });
+  }
+  finish({ ok: true });
+} catch (error) {
+  finish({ ok: false, error: String(error?.stack ?? error) });
+}
+</script>
+</body>
+</html>

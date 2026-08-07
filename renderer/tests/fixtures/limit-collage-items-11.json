@@ -1,0 +1,154 @@
+{
+  "id": "limit-collage-items-11",
+  "description": "Collage of 11 photos exceeds the 10-item limit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "collage",
+        "blocks": [
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo1.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo2.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo3.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo4.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo5.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo6.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo7.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo8.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo9.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo10.jpg"
+            }
+          },
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo11.jpg"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "collage",
+          "items": [
+            {
+              "ref": "m0",
+              "kind": "photo"
+            },
+            {
+              "ref": "m1",
+              "kind": "photo"
+            },
+            {
+              "ref": "m2",
+              "kind": "photo"
+            },
+            {
+              "ref": "m3",
+              "kind": "photo"
+            },
+            {
+              "ref": "m4",
+              "kind": "photo"
+            },
+            {
+              "ref": "m5",
+              "kind": "photo"
+            },
+            {
+              "ref": "m6",
+              "kind": "photo"
+            },
+            {
+              "ref": "m7",
+              "kind": "photo"
+            },
+            {
+              "ref": "m8",
+              "kind": "photo"
+            },
+            {
+              "ref": "m9",
+              "kind": "photo"
+            },
+            {
+              "ref": "m10",
+              "kind": "photo"
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "limit.collage-items",
+        "path": "$.blocks[0].items"
+      }
+    ]
+  }
+}

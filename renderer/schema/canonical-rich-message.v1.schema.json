@@ -1,0 +1,416 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://telegram.tools/renderer/schema/canonical-rich-message.v1.schema.json",
+  "title": "CanonicalRichMessage v1",
+  "description": "Versioned canonical rich-message structure exchanged between the TypeScript adapters and the TDesktop-derived renderer. Mirrors Iv::RichPage at TDesktop v7.0.9 (a1e89e1f); text is flat UTF-16 text plus offset/length entities, matching TextWithEntities.",
+  "type": "object",
+  "required": ["schemaVersion", "blocks"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "rtl": { "type": "boolean", "default": false },
+    "blocks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/block" }
+    }
+  },
+  "$defs": {
+    "richText": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "text": { "type": "string" },
+        "entities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/entity" },
+          "default": []
+        }
+      }
+    },
+    "entity": {
+      "type": "object",
+      "required": ["type", "offset", "length"],
+      "properties": {
+        "type": {
+          "enum": [
+            "bold",
+            "italic",
+            "underline",
+            "strikethrough",
+            "spoiler",
+            "code",
+            "subscript",
+            "superscript",
+            "marked",
+            "date_time",
+            "text_mention",
+            "mention",
+            "hashtag",
+            "cashtag",
+            "bot_command",
+            "email_address",
+            "phone_number",
+            "bank_card_number",
+            "url",
+            "custom_emoji",
+            "math",
+            "anchor",
+            "anchor_link",
+            "reference",
+            "reference_link"
+          ]
+        },
+        "offset": { "type": "integer", "minimum": 0 },
+        "length": { "type": "integer", "minimum": 0 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "url" } }, "required": ["type"] },
+          "then": { "required": ["url"], "properties": { "url": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "date_time" } }, "required": ["type"] },
+          "then": {
+            "required": ["unixTime", "format"],
+            "properties": {
+              "unixTime": { "type": "integer" },
+              "format": { "type": "string", "pattern": "^(r|w?[dD]?[tT]?)$" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "text_mention" } }, "required": ["type"] },
+          "then": {
+            "required": ["userId"],
+            "properties": {
+              "userId": { "type": "integer" },
+              "userFirstName": { "type": "string" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "mention" } }, "required": ["type"] },
+          "then": { "required": ["username"], "properties": { "username": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "hashtag" } }, "required": ["type"] },
+          "then": { "required": ["hashtag"], "properties": { "hashtag": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "cashtag" } }, "required": ["type"] },
+          "then": { "required": ["cashtag"], "properties": { "cashtag": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "bot_command" } }, "required": ["type"] },
+          "then": { "required": ["botCommand"], "properties": { "botCommand": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "email_address" } }, "required": ["type"] },
+          "then": { "required": ["emailAddress"], "properties": { "emailAddress": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "phone_number" } }, "required": ["type"] },
+          "then": { "required": ["phoneNumber"], "properties": { "phoneNumber": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "bank_card_number" } }, "required": ["type"] },
+          "then": { "required": ["bankCardNumber"], "properties": { "bankCardNumber": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "custom_emoji" } }, "required": ["type"] },
+          "then": {
+            "required": ["customEmojiId"],
+            "properties": { "customEmojiId": { "type": "string" } }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "math" } }, "required": ["type"] },
+          "then": { "required": ["expression"], "properties": { "expression": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "anchor" } }, "required": ["type"] },
+          "then": {
+            "required": ["name"],
+            "properties": { "name": { "type": "string" }, "length": { "const": 0 } }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "anchor_link" } }, "required": ["type"] },
+          "then": { "required": ["anchorName"], "properties": { "anchorName": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "reference" } }, "required": ["type"] },
+          "then": { "required": ["name"], "properties": { "name": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "reference_link" } }, "required": ["type"] },
+          "then": { "required": ["referenceName"], "properties": { "referenceName": { "type": "string" } } }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "caption": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "$ref": "#/$defs/richText" },
+        "credit": { "$ref": "#/$defs/richText" }
+      }
+    },
+    "mediaRef": {
+      "type": "object",
+      "description": "Session-free media reference. Pixel data is registered separately with the renderer under `ref`; PhotoData/DocumentData never cross the public boundary.",
+      "required": ["ref", "kind"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9_-]+$" },
+        "kind": { "enum": ["photo", "video", "animation", "audio", "voice_note"] },
+        "width": { "type": "integer", "minimum": 0 },
+        "height": { "type": "integer", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 0 },
+        "mimeType": { "type": "string" },
+        "fileName": { "type": "string" },
+        "title": { "type": "string" },
+        "performer": { "type": "string" },
+        "autoplay": { "type": "boolean" },
+        "loop": { "type": "boolean" },
+        "spoiler": { "type": "boolean" }
+      }
+    },
+    "listItem": {
+      "type": "object",
+      "required": ["blocks"],
+      "additionalProperties": false,
+      "properties": {
+        "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } },
+        "taskState": { "enum": ["none", "unchecked", "checked"], "default": "none" },
+        "value": { "type": "integer" },
+        "numberingType": { "enum": ["a", "A", "i", "I", "1"] }
+      }
+    },
+    "tableCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": { "$ref": "#/$defs/richText" },
+        "header": { "type": "boolean", "default": false },
+        "colspan": { "type": "integer", "minimum": 1, "default": 1 },
+        "rowspan": { "type": "integer", "minimum": 1, "default": 1 },
+        "align": { "enum": ["left", "center", "right"], "default": "left" },
+        "valign": { "enum": ["top", "middle", "bottom"], "default": "top" }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": ["kind"],
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "paragraph" },
+            "text": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "text"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "heading" },
+            "text": { "$ref": "#/$defs/richText" },
+            "level": { "type": "integer", "minimum": 1, "maximum": 6 }
+          },
+          "required": ["kind", "text", "level"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "pre" },
+            "text": { "$ref": "#/$defs/richText" },
+            "language": { "type": "string" }
+          },
+          "required": ["kind", "text"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "footer" },
+            "text": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "text"],
+          "additionalProperties": false
+        },
+        {
+          "properties": { "kind": { "const": "divider" } },
+          "required": ["kind"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "math" },
+            "expression": { "type": "string" }
+          },
+          "required": ["kind", "expression"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "anchor" },
+            "name": { "type": "string" }
+          },
+          "required": ["kind", "name"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "list" },
+            "ordered": { "type": "boolean" },
+            "items": { "type": "array", "items": { "$ref": "#/$defs/listItem" } }
+          },
+          "required": ["kind", "ordered", "items"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "blockquote" },
+            "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } },
+            "credit": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "blocks"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "pullquote" },
+            "text": { "$ref": "#/$defs/richText" },
+            "credit": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "text"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "collage" },
+            "items": { "type": "array", "items": { "$ref": "#/$defs/mediaRef" }, "maxItems": 10 },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "items"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "slideshow" },
+            "items": { "type": "array", "items": { "$ref": "#/$defs/mediaRef" }, "maxItems": 10 },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "items"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "table" },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["cells"],
+                "additionalProperties": false,
+                "properties": {
+                  "cells": { "type": "array", "items": { "$ref": "#/$defs/tableCell" } }
+                }
+              }
+            },
+            "bordered": { "type": "boolean", "default": false },
+            "striped": { "type": "boolean", "default": false },
+            "caption": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "rows"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "details" },
+            "summary": { "$ref": "#/$defs/richText" },
+            "blocks": { "type": "array", "items": { "$ref": "#/$defs/block" } },
+            "open": { "type": "boolean", "default": false }
+          },
+          "required": ["kind", "summary", "blocks"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "map" },
+            "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+            "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+            "zoom": { "type": "integer", "minimum": 0, "maximum": 24 },
+            "width": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "height": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "latitude", "longitude", "zoom", "width", "height"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "photo" },
+            "media": { "$ref": "#/$defs/mediaRef" },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "media"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "video" },
+            "media": { "$ref": "#/$defs/mediaRef" },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "media"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "animation" },
+            "media": { "$ref": "#/$defs/mediaRef" },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "media"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "audio" },
+            "media": { "$ref": "#/$defs/mediaRef" },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "media"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "voice_note" },
+            "media": { "$ref": "#/$defs/mediaRef" },
+            "caption": { "$ref": "#/$defs/caption" }
+          },
+          "required": ["kind", "media"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "thinking" },
+            "text": { "$ref": "#/$defs/richText" }
+          },
+          "required": ["kind", "text"],
+          "additionalProperties": false
+        },
+        {
+          "properties": {
+            "kind": { "const": "unsupported" },
+            "reason": { "type": "string" }
+          },
+          "required": ["kind"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

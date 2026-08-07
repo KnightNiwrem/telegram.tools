@@ -1,0 +1,35 @@
+{
+  "id": "block-anchor-basic",
+  "description": "A block-level anchor.",
+  "input": {
+    "blocks": [
+      {
+        "type": "anchor",
+        "name": "chapter-1"
+      },
+      {
+        "type": "paragraph",
+        "text": "Chapter one"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "anchor",
+          "name": "chapter-1"
+        },
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Chapter one"
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

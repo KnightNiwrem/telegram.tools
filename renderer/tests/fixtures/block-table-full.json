@@ -1,0 +1,135 @@
+{
+  "id": "block-table-full",
+  "description": "Bordered, striped table with caption, header row, colspan/rowspan merges, and every align/valign value.",
+  "input": {
+    "blocks": [
+      {
+        "type": "table",
+        "cells": [
+          [
+            {
+              "text": "Header 1",
+              "is_header": true,
+              "align": "left",
+              "valign": "top"
+            },
+            {
+              "text": "Header 2",
+              "is_header": true,
+              "align": "center",
+              "valign": "middle"
+            },
+            {
+              "text": "Header 3",
+              "is_header": true,
+              "align": "right",
+              "valign": "bottom"
+            }
+          ],
+          [
+            {
+              "text": "Spans two columns and two rows",
+              "colspan": 2,
+              "rowspan": 2,
+              "align": "left",
+              "valign": "middle"
+            },
+            {
+              "text": "Value 1",
+              "align": "center",
+              "valign": "top"
+            }
+          ],
+          [
+            {
+              "text": "Value 2",
+              "align": "right",
+              "valign": "bottom"
+            }
+          ]
+        ],
+        "is_bordered": true,
+        "is_striped": true,
+        "caption": "Table caption"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "table",
+          "rows": [
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "top",
+                  "text": {
+                    "text": "Header 1"
+                  },
+                  "header": true
+                },
+                {
+                  "align": "center",
+                  "valign": "middle",
+                  "text": {
+                    "text": "Header 2"
+                  },
+                  "header": true
+                },
+                {
+                  "align": "right",
+                  "valign": "bottom",
+                  "text": {
+                    "text": "Header 3"
+                  },
+                  "header": true
+                }
+              ]
+            },
+            {
+              "cells": [
+                {
+                  "align": "left",
+                  "valign": "middle",
+                  "text": {
+                    "text": "Spans two columns and two rows"
+                  },
+                  "colspan": 2,
+                  "rowspan": 2
+                },
+                {
+                  "align": "center",
+                  "valign": "top",
+                  "text": {
+                    "text": "Value 1"
+                  }
+                }
+              ]
+            },
+            {
+              "cells": [
+                {
+                  "align": "right",
+                  "valign": "bottom",
+                  "text": {
+                    "text": "Value 2"
+                  }
+                }
+              ]
+            }
+          ],
+          "bordered": true,
+          "striped": true,
+          "caption": {
+            "text": "Table caption"
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

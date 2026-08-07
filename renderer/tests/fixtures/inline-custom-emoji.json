@@ -1,0 +1,43 @@
+{
+  "id": "inline-custom-emoji",
+  "description": "Custom emoji whose alternative text becomes the covered text.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Nice ",
+          {
+            "type": "custom_emoji",
+            "custom_emoji_id": "5368324170671202286",
+            "alternative_text": "👍"
+          },
+          "!"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Nice 👍!",
+            "entities": [
+              {
+                "type": "custom_emoji",
+                "offset": 5,
+                "length": 2,
+                "customEmojiId": "5368324170671202286"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

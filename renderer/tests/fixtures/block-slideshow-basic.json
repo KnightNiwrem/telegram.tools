@@ -1,0 +1,57 @@
+{
+  "id": "block-slideshow-basic",
+  "description": "Slideshow of a photo and a video with a caption.",
+  "input": {
+    "blocks": [
+      {
+        "type": "slideshow",
+        "blocks": [
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo.jpg"
+            }
+          },
+          {
+            "type": "video",
+            "video": {
+              "type": "video",
+              "media": "https://telegram.org/example/video.mp4"
+            }
+          }
+        ],
+        "caption": {
+          "text": "Slideshow caption"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "slideshow",
+          "items": [
+            {
+              "ref": "m0",
+              "kind": "photo"
+            },
+            {
+              "ref": "m1",
+              "kind": "video"
+            }
+          ],
+          "caption": {
+            "text": {
+              "text": "Slideshow caption"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

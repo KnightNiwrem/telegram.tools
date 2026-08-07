@@ -1,0 +1,63 @@
+{
+  "id": "block-blockquote-nested",
+  "description": "Block quotation containing a heading and paragraphs, with a credit.",
+  "input": {
+    "blocks": [
+      {
+        "type": "blockquote",
+        "blocks": [
+          {
+            "type": "heading",
+            "text": "Quoted heading",
+            "size": 3
+          },
+          {
+            "type": "paragraph",
+            "text": "Quotation started"
+          },
+          {
+            "type": "paragraph",
+            "text": "The last line of the quotation"
+          }
+        ],
+        "credit": "The Author"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "blockquote",
+          "blocks": [
+            {
+              "kind": "heading",
+              "text": {
+                "text": "Quoted heading"
+              },
+              "level": 3
+            },
+            {
+              "kind": "paragraph",
+              "text": {
+                "text": "Quotation started"
+              }
+            },
+            {
+              "kind": "paragraph",
+              "text": {
+                "text": "The last line of the quotation"
+              }
+            }
+          ],
+          "credit": {
+            "text": "The Author"
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

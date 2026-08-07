@@ -1,0 +1,54 @@
+{
+  "id": "inline-reference-and-link",
+  "description": "Reference definition plus a reference link.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          {
+            "type": "reference",
+            "text": "Referenced passage",
+            "name": "note-1"
+          },
+          " and later a ",
+          {
+            "type": "reference_link",
+            "text": "reference link",
+            "reference_name": "note-1"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Referenced passage and later a reference link.",
+            "entities": [
+              {
+                "type": "reference",
+                "name": "note-1",
+                "offset": 0,
+                "length": 18
+              },
+              {
+                "type": "reference_link",
+                "referenceName": "note-1",
+                "offset": 31,
+                "length": 14
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

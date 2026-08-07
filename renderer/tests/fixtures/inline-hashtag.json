@@ -1,0 +1,42 @@
+{
+  "id": "inline-hashtag",
+  "description": "Hashtag entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Trending: ",
+          {
+            "type": "hashtag",
+            "text": "#fixtures",
+            "hashtag": "fixtures"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Trending: #fixtures",
+            "entities": [
+              {
+                "type": "hashtag",
+                "hashtag": "fixtures",
+                "offset": 10,
+                "length": 9
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

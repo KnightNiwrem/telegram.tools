@@ -1,0 +1,46 @@
+{
+  "id": "warn-media-caption-ignored",
+  "description": "InputMedia-level caption is ignored in rich message blocks; the adapter warns and keeps the block-level caption.",
+  "input": {
+    "blocks": [
+      {
+        "type": "photo",
+        "photo": {
+          "type": "photo",
+          "media": "https://telegram.org/example/photo.jpg",
+          "caption": "this InputMedia caption is ignored"
+        },
+        "caption": {
+          "text": "block-level caption wins"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "photo",
+          "media": {
+            "ref": "m0",
+            "kind": "photo"
+          },
+          "caption": {
+            "text": {
+              "text": "block-level caption wins"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "warning",
+        "code": "adapter.media-caption-ignored",
+        "path": "blocks[0].photo.caption"
+      }
+    ]
+  }
+}

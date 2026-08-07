@@ -1,0 +1,64 @@
+{
+  "id": "inline-nested-entities",
+  "description": "Bold containing italic containing underline; ranges nest exactly.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Nested: ",
+          {
+            "type": "bold",
+            "text": [
+              "b ",
+              {
+                "type": "italic",
+                "text": [
+                  "i ",
+                  {
+                    "type": "underline",
+                    "text": "u"
+                  },
+                  " i"
+                ]
+              },
+              " b"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Nested: b i u i b",
+            "entities": [
+              {
+                "type": "underline",
+                "offset": 12,
+                "length": 1
+              },
+              {
+                "type": "italic",
+                "offset": 10,
+                "length": 5
+              },
+              {
+                "type": "bold",
+                "offset": 8,
+                "length": 9
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

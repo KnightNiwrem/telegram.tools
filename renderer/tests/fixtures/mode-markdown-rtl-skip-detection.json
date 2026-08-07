@@ -1,0 +1,13 @@
+{
+  "id": "mode-markdown-rtl-skip-detection",
+  "description": "Markdown passthrough carrying is_rtl and skip_entity_detection flags.",
+  "input": {
+    "markdown": "مرحبا **بالعالم** https://t.me",
+    "is_rtl": true,
+    "skip_entity_detection": true
+  },
+  "expected": {
+    "mode": "markdown",
+    "diagnostics": []
+  }
+}

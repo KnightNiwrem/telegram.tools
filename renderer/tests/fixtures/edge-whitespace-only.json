@@ -1,0 +1,27 @@
+{
+  "id": "edge-whitespace-only",
+  "description": "Paragraph containing only spaces and tabs.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": " \t \t   "
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": " \t \t   "
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

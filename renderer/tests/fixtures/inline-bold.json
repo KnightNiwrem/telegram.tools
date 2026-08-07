@@ -1,0 +1,41 @@
+{
+  "id": "inline-bold",
+  "description": "Bold wrapper entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "This is ",
+          {
+            "type": "bold",
+            "text": "bold"
+          },
+          " text."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "This is bold text.",
+            "entities": [
+              {
+                "type": "bold",
+                "offset": 8,
+                "length": 4
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

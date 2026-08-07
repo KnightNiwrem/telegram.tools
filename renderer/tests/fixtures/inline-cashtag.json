@@ -1,0 +1,43 @@
+{
+  "id": "inline-cashtag",
+  "description": "Cashtag entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Price of ",
+          {
+            "type": "cashtag",
+            "text": "$USD",
+            "cashtag": "USD"
+          },
+          " today."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Price of $USD today.",
+            "entities": [
+              {
+                "type": "cashtag",
+                "cashtag": "USD",
+                "offset": 9,
+                "length": 4
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

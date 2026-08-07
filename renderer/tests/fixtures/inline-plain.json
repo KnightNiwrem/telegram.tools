@@ -1,0 +1,27 @@
+{
+  "id": "inline-plain",
+  "description": "Plain string rich text.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "Just plain text with no entities."
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Just plain text with no entities."
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

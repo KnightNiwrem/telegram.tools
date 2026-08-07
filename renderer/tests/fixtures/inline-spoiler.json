@@ -1,0 +1,41 @@
+{
+  "id": "inline-spoiler",
+  "description": "Spoiler wrapper entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "The butler ",
+          {
+            "type": "spoiler",
+            "text": "did it"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "The butler did it.",
+            "entities": [
+              {
+                "type": "spoiler",
+                "offset": 11,
+                "length": 6
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

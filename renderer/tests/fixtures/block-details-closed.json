@@ -1,0 +1,47 @@
+{
+  "id": "block-details-closed",
+  "description": "Details block collapsed by default (no is_open).",
+  "input": {
+    "blocks": [
+      {
+        "type": "details",
+        "summary": "Closed summary",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Hidden content"
+          },
+          {
+            "type": "divider"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "details",
+          "summary": {
+            "text": "Closed summary"
+          },
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": {
+                "text": "Hidden content"
+              }
+            },
+            {
+              "kind": "divider"
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

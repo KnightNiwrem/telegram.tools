@@ -1,0 +1,43 @@
+{
+  "id": "block-divider-basic",
+  "description": "A divider between two paragraphs.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "Above"
+      },
+      {
+        "type": "divider"
+      },
+      {
+        "type": "paragraph",
+        "text": "Below"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Above"
+          }
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Below"
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

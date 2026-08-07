@@ -1,0 +1,20 @@
+{
+  "id": "mode-html-basic",
+  "description": "HTML content with an id-referenced media list passes through.",
+  "input": {
+    "html": "<h1>Title</h1><p><b>Bold</b> and <i>italic</i>.</p><img src=\"tg://photo?id=cover\"/>",
+    "media": [
+      {
+        "id": "cover",
+        "media": {
+          "type": "photo",
+          "media": "https://telegram.org/example/photo.jpg"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "html",
+    "diagnostics": []
+  }
+}

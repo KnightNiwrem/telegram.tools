@@ -1,0 +1,26 @@
+From: telegram.tools rich-message renderer
+Subject: [PATCH] Add TDESKTOP_RENDERER_HARNESS hook for the sessionless
+ renderer targets
+
+The only in-tree change the renderer needs: an opt-in add_subdirectory()
+hook so the harness targets (renderer/cpp) configure inside the pinned
+tree with access to tdesktop::td_iv / tdesktop::td_ui and the desktop-app
+cmake helpers. Off by default; upstream behavior is unchanged unless
+-DTDESKTOP_RENDERER_HARNESS_DIR=<path to renderer/cpp> is passed.
+
+Applied at build time by renderer/scripts/build-native.sh; never committed
+to the submodule.
+---
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -44,6 +44,10 @@ if (DESKTOP_APP_TEST_APPS)
+     include(cmake/tests.cmake)
+ endif()
+
++if (TDESKTOP_RENDERER_HARNESS_DIR)
++    add_subdirectory(${TDESKTOP_RENDERER_HARNESS_DIR} ttr-renderer)
++endif()
++
+ if (WIN32)
+     include(cmake/generate_midl.cmake)
+     generate_midl(Telegram ${src_loc}

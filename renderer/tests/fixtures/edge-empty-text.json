@@ -1,0 +1,27 @@
+{
+  "id": "edge-empty-text",
+  "description": "Paragraph with an empty string.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": ""
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": ""
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

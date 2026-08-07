@@ -1,0 +1,15 @@
+{
+  "id": "invalid-neither-content",
+  "description": "Setting none of blocks, html, or markdown is rejected outright.",
+  "input": {},
+  "expected": {
+    "mode": "invalid",
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "adapter.content-form",
+        "path": "$"
+      }
+    ]
+  }
+}

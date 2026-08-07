@@ -1,0 +1,48 @@
+{
+  "id": "invalid-collage-non-media",
+  "description": "Collage containing a paragraph; only photo/video/animation blocks are legal collage items.",
+  "input": {
+    "blocks": [
+      {
+        "type": "collage",
+        "blocks": [
+          {
+            "type": "photo",
+            "photo": {
+              "type": "photo",
+              "media": "https://telegram.org/example/photo.jpg"
+            }
+          },
+          {
+            "type": "paragraph",
+            "text": "not media"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "collage",
+          "items": [
+            {
+              "ref": "m0",
+              "kind": "photo"
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "adapter.grouped-media-kind",
+        "path": "blocks[0].blocks[1]"
+      }
+    ]
+  }
+}

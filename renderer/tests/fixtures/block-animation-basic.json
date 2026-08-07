@@ -1,0 +1,47 @@
+{
+  "id": "block-animation-basic",
+  "description": "Animation block; the adapter forces autoplay/loop true and copies dimensions.",
+  "input": {
+    "blocks": [
+      {
+        "type": "animation",
+        "animation": {
+          "type": "animation",
+          "media": "https://telegram.org/example/animation.gif",
+          "width": 480,
+          "height": 270,
+          "duration": 3
+        },
+        "caption": {
+          "text": "Animation caption"
+        }
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "animation",
+          "media": {
+            "ref": "m0",
+            "kind": "animation",
+            "width": 480,
+            "height": 270,
+            "duration": 3,
+            "autoplay": true,
+            "loop": true
+          },
+          "caption": {
+            "text": {
+              "text": "Animation caption"
+            }
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

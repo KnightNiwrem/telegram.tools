@@ -1,0 +1,43 @@
+{
+  "id": "block-details-open",
+  "description": "Details block expanded by default.",
+  "input": {
+    "blocks": [
+      {
+        "type": "details",
+        "summary": "Open summary",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "text": "Visible content"
+          }
+        ],
+        "is_open": true
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "details",
+          "summary": {
+            "text": "Open summary"
+          },
+          "blocks": [
+            {
+              "kind": "paragraph",
+              "text": {
+                "text": "Visible content"
+              }
+            }
+          ],
+          "open": true
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

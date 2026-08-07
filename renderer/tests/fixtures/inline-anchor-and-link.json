@@ -1,0 +1,52 @@
+{
+  "id": "inline-anchor-and-link",
+  "description": "Zero-length inline anchor plus an anchor link targeting it.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          {
+            "type": "anchor",
+            "name": "top"
+          },
+          "Start of text. ",
+          {
+            "type": "anchor_link",
+            "text": "Back to top",
+            "anchor_name": "top"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Start of text. Back to top",
+            "entities": [
+              {
+                "type": "anchor",
+                "offset": 0,
+                "length": 0,
+                "name": "top"
+              },
+              {
+                "type": "anchor_link",
+                "anchorName": "top",
+                "offset": 15,
+                "length": 11
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

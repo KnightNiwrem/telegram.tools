@@ -1,0 +1,23 @@
+{
+  "id": "invalid-both-html-and-blocks",
+  "description": "Setting both html and blocks is rejected outright.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": "blocks content"
+      }
+    ],
+    "html": "<b>html content</b>"
+  },
+  "expected": {
+    "mode": "invalid",
+    "diagnostics": [
+      {
+        "severity": "error",
+        "code": "adapter.content-form",
+        "path": "$"
+      }
+    ]
+  }
+}

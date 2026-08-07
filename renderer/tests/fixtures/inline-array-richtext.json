@@ -1,0 +1,44 @@
+{
+  "id": "inline-array-richtext",
+  "description": "Array-form RichText mixing plain strings, nested arrays, and entities.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Head ",
+          [
+            "nested-array ",
+            {
+              "type": "bold",
+              "text": "deep bold"
+            }
+          ],
+          " tail"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Head nested-array deep bold tail",
+            "entities": [
+              {
+                "type": "bold",
+                "offset": 18,
+                "length": 9
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

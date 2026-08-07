@@ -1,0 +1,27 @@
+{
+  "id": "block-footer-basic",
+  "description": "A footer block.",
+  "input": {
+    "blocks": [
+      {
+        "type": "footer",
+        "text": "Published by the fixture corpus"
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "footer",
+          "text": {
+            "text": "Published by the fixture corpus"
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

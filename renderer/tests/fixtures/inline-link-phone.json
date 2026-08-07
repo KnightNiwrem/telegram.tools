@@ -1,0 +1,43 @@
+{
+  "id": "inline-link-phone",
+  "description": "Phone number entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "Call ",
+          {
+            "type": "phone_number",
+            "text": "+1 234 567 8901",
+            "phone_number": "+12345678901"
+          },
+          "."
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "Call +1 234 567 8901.",
+            "entities": [
+              {
+                "type": "phone_number",
+                "phoneNumber": "+12345678901",
+                "offset": 5,
+                "length": 15
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

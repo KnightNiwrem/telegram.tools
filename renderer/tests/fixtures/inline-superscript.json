@@ -1,0 +1,50 @@
+{
+  "id": "inline-superscript",
+  "description": "Superscript entity.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "x",
+          {
+            "type": "superscript",
+            "text": "2"
+          },
+          " + y",
+          {
+            "type": "superscript",
+            "text": "2"
+          }
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "x2 + y2",
+            "entities": [
+              {
+                "type": "superscript",
+                "offset": 1,
+                "length": 1
+              },
+              {
+                "type": "superscript",
+                "offset": 6,
+                "length": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}

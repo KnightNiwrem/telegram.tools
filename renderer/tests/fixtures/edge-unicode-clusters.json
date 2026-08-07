@@ -1,0 +1,41 @@
+{
+  "id": "edge-unicode-clusters",
+  "description": "Emoji, combining marks, ZWJ sequences, flags, and astral-plane letters.",
+  "input": {
+    "blocks": [
+      {
+        "type": "paragraph",
+        "text": [
+          "café naïve ",
+          {
+            "type": "bold",
+            "text": "👩‍👩‍👧‍👦"
+          },
+          " 🇩🇪 👍🏽 𝕌𝕟𝕚 ȩ́"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "mode": "blocks",
+    "canonical": {
+      "schemaVersion": 1,
+      "blocks": [
+        {
+          "kind": "paragraph",
+          "text": {
+            "text": "café naïve 👩‍👩‍👧‍👦 🇩🇪 👍🏽 𝕌𝕟𝕚 ȩ́",
+            "entities": [
+              {
+                "type": "bold",
+                "offset": 12,
+                "length": 11
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "diagnostics": []
+  }
+}
