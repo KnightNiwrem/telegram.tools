@@ -352,13 +352,7 @@ export function RichMessageEditor(
       <div class="text-xs opacity-50">
         {FIDELITY_MODE_LABELS[fidelityMode.value]}
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <textarea
-          class="w-full h-96 p-3 font-mono text-sm bg-transparent border border-border rounded-lg resize-y"
-          spellcheck={false}
-          value={source.value}
-          onInput={(event) => source.value = event.currentTarget.value}
-        />
+      <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-2">
           {rendererStatus.value === "unavailable" && (
             <div class="text-sm border border-border rounded-lg p-4">
@@ -374,17 +368,27 @@ export function RichMessageEditor(
           )}
           {rendererStatus.value === "ready" && (
             <>
-              <canvas
-                ref={(element) => {
-                  canvas.current = element;
-                  // The canvas mounts only once the renderer is ready, which
-                  // can be after the first render result arrived; paint it.
-                  if (element !== null && renderResult.value !== null) {
-                    blitToCanvas(renderResult.value, element);
-                  }
-                }}
-                class="border border-border rounded-lg max-w-full"
-              />
+              {
+                /* The preview must stay at true size — the point of the
+                  width presets is line wrapping and text density at that
+                  width. Scroll rather than scale: a max-width on the
+                  canvas would squash it (CSS clamps the width while the
+                  blitted inline height stays fixed). */
+              }
+              <div class="overflow-x-auto">
+                <canvas
+                  ref={(element) => {
+                    canvas.current = element;
+                    // The canvas mounts only once the renderer is ready,
+                    // which can be after the first render result arrived;
+                    // paint it.
+                    if (element !== null && renderResult.value !== null) {
+                      blitToCanvas(renderResult.value, element);
+                    }
+                  }}
+                  class="border border-border rounded-lg"
+                />
+              </div>
               <div class="text-xs opacity-50">
                 {rendererVersion.value}
                 {renderResult.value !== null &&
@@ -393,6 +397,12 @@ export function RichMessageEditor(
             </>
           )}
         </div>
+        <textarea
+          class="w-full h-96 p-3 font-mono text-sm bg-transparent border border-border rounded-lg resize-y"
+          spellcheck={false}
+          value={source.value}
+          onInput={(event) => source.value = event.currentTarget.value}
+        />
       </div>
       {diagnostics.value.length > 0 && (
         <div class="border border-border rounded-lg p-3 text-sm font-mono flex flex-col gap-1">
