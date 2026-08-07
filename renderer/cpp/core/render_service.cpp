@@ -123,11 +123,14 @@ public:
 		// Device pixel ratio: layout stays in logical pixels (identical
 		// line wrapping at any scale); only the output bitmap is rendered
 		// at viewportWidth*scale, via QImage::setDevicePixelRatio.
-		const auto scale = request.value(u"scale"_q).toDouble(1.);
-		if (scale < 1. || scale > 4.) {
+		const auto rawScale = request.value(u"scale"_q);
+		const auto scale = rawScale.isUndefined() ? 1. : rawScale.toDouble();
+		if ((!rawScale.isUndefined() && !rawScale.isDouble())
+			|| scale < 1.
+			|| scale > 4.) {
 			return fail(
 				u"renderer.scale"_q,
-				u"scale must be within 1..4"_q);
+				u"scale must be a number within 1..4"_q);
 		}
 		const auto theme = request.value(u"theme"_q).toString();
 		if (theme == u"dark"_q) {
@@ -203,7 +206,7 @@ public:
 		const auto physical = QSize(viewportWidth, height) * scale;
 		if (double(physical.width()) * physical.height() > 4096. * 65536.) {
 			return fail(
-				u"renderer.layout"_q,
+				u"renderer.output-size"_q,
 				u"scaled output exceeds the maximum image area"_q);
 		}
 		auto image = QImage(physical, QImage::Format_ARGB32_Premultiplied);
@@ -236,7 +239,16 @@ public:
 			_article.paint(p, context);
 		}
 
-		output.image = image.convertToFormat(QImage::Format_RGBA8888);
+		// Same-depth conversion on an rvalue converts in place, so the
+		// peak stays one image; a null result (fallback-path allocation
+		// failure) must fail the render, not report ok.
+		output.image = std::move(image).convertToFormat(
+			QImage::Format_RGBA8888);
+		if (output.image.isNull()) {
+			return fail(
+				u"renderer.allocation"_q,
+				u"pixel buffer allocation failed"_q);
+		}
 		output.ok = true;
 
 		auto geometry = QJsonArray();
