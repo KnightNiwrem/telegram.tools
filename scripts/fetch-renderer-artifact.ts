@@ -12,7 +12,7 @@
 interface ArtifactLock {
   repo: string;
   tag: string;
-  files: Record<string, string>;
+  files: Record<string, { sha256: string; bytes: number }>;
 }
 
 const root = new URL("..", import.meta.url);
@@ -44,8 +44,8 @@ await Deno.mkdir(outDir, { recursive: true });
 for (const [name, expected] of Object.entries(lock.files)) {
   const target = new URL(name, outDir);
   try {
-    if (await sha256(await Deno.readFile(target)) === expected) {
-      console.log(`${name}: up to date (${expected.slice(0, 12)}…)`);
+    if (await sha256(await Deno.readFile(target)) === expected.sha256) {
+      console.log(`${name}: up to date (${expected.sha256.slice(0, 12)}…)`);
       continue;
     }
   } catch {
@@ -61,10 +61,17 @@ for (const [name, expected] of Object.entries(lock.files)) {
   }
   const bytes = new Uint8Array(await response.arrayBuffer());
   const actual = await sha256(bytes);
-  if (actual !== expected) {
+  if (actual !== expected.sha256) {
     console.error(
-      `${name}: sha256 mismatch\n  lock:       ${expected}\n` +
+      `${name}: sha256 mismatch\n  lock:       ${expected.sha256}\n` +
         `  downloaded: ${actual}`,
+    );
+    Deno.exit(1);
+  }
+  if (bytes.length !== expected.bytes) {
+    console.error(
+      `${name}: size mismatch — lock says ${expected.bytes} bytes, ` +
+        `downloaded ${bytes.length}`,
     );
     Deno.exit(1);
   }

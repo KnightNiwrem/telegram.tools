@@ -161,9 +161,14 @@ jobs:
               --notes "Built and geometry-verified against the committed native goldens by renderer-wasm run ${GITHUB_RUN_ID}. License: GPL-3.0 with the OpenSSL exception (renderer/LICENSE); corresponding source: this repository at ${GITHUB_SHA} including the pinned tdesktop submodule." \
               renderer/dist/ttr-renderer.js renderer/dist/ttr-renderer.wasm
           fi
+          js_bytes=$(stat -c%s renderer/dist/ttr-renderer.js)
+          wasm_bytes=$(stat -c%s renderer/dist/ttr-renderer.wasm)
           jq -n --arg repo "$GITHUB_REPOSITORY" --arg tag "$tag" \
             --arg js "$js_sha" --arg wasm "$wasm_sha" \
-            '{repo: $repo, tag: $tag, files: {"ttr-renderer.js": $js, "ttr-renderer.wasm": $wasm}}' \
+            --argjson js_bytes "$js_bytes" --argjson wasm_bytes "$wasm_bytes" \
+            '{repo: $repo, tag: $tag, files: {
+               "ttr-renderer.js": {sha256: $js, bytes: $js_bytes},
+               "ttr-renderer.wasm": {sha256: $wasm, bytes: $wasm_bytes}}}' \
             > renderer/artifact.lock.json
           git add renderer/artifact.lock.json
           # --cached: `git diff --quiet` reports nothing for an
