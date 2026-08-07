@@ -29,6 +29,7 @@ interface RawRenderResult {
   status: "ok" | "error";
   width?: number;
   height?: number;
+  scale?: number;
   pixelsOffset?: number;
   pixelsSize?: number;
   diagnostics?: RenderDiagnostic[];
@@ -192,6 +193,7 @@ export class RichMessageRenderer {
     return {
       width: raw.width ?? 0,
       height: raw.height ?? 0,
+      scale: raw.scale,
       rgba,
       diagnostics,
       geometry: raw.geometry ?? [],

@@ -68,6 +68,13 @@ Numbers are **up** and morale is ||complicated||.`;
 // output is deployed under static/rich-message-renderer/.
 const RENDERER_GLUE_URL = "/rich-message-renderer/ttr-renderer.js";
 
+function dimensionsLabel(result: RenderResult): string {
+  const scale = result.scale ?? 1;
+  const width = Math.round(result.width / scale);
+  const height = Math.round(result.height / scale);
+  return scale === 1 ? `${width}×${height}` : `${width}×${height} @${scale}x`;
+}
+
 function severityColor(severity: RenderDiagnostic["severity"]): string {
   switch (severity) {
     case "error":
@@ -236,13 +243,16 @@ export function RichMessageEditor(
         content,
         viewportWidth: currentWidth,
         theme: currentTheme,
-        scale: 1,
+        // Hi-DPI displays get a crisp bitmap; layout is unaffected. The
+        // renderer echoes the scale it applied (older artifacts ignore
+        // the field), so the blit below trusts the result, not this.
+        scale: Math.min(Math.max(globalThis.devicePixelRatio ?? 1, 1), 3),
       })
       .then((result) => {
         renderResult.value = result;
         diagnostics.value = [...collected, ...result.diagnostics];
         if (canvas.current !== null && result.width > 0) {
-          blitToCanvas(result, canvas.current);
+          blitToCanvas(result, canvas.current, { scale: result.scale ?? 1 });
         }
       })
       .catch((error) => {
@@ -388,7 +398,9 @@ export function RichMessageEditor(
                     // which can be after the first render result arrived;
                     // paint it.
                     if (element !== null && renderResult.value !== null) {
-                      blitToCanvas(renderResult.value, element);
+                      blitToCanvas(renderResult.value, element, {
+                        scale: renderResult.value.scale ?? 1,
+                      });
                     }
                   }}
                   class="border border-border rounded-lg"
@@ -397,7 +409,7 @@ export function RichMessageEditor(
               <div class="text-xs opacity-50">
                 {rendererVersion.value}
                 {renderResult.value !== null &&
-                  ` · ${renderResult.value.width}×${renderResult.value.height}`}
+                  ` · ${dimensionsLabel(renderResult.value)}`}
               </div>
             </>
           )}

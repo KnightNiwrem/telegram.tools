@@ -120,6 +120,15 @@ public:
 				u"renderer.viewport"_q,
 				u"viewportWidth must be within 1..4096"_q);
 		}
+		// Device pixel ratio: layout stays in logical pixels (identical
+		// line wrapping at any scale); only the output bitmap is rendered
+		// at viewportWidth*scale, via QImage::setDevicePixelRatio.
+		const auto scale = request.value(u"scale"_q).toDouble(1.);
+		if (scale < 1. || scale > 4.) {
+			return fail(
+				u"renderer.scale"_q,
+				u"scale must be within 1..4"_q);
+		}
 		const auto theme = request.value(u"theme"_q).toString();
 		if (theme == u"dark"_q) {
 			// Dark palette loading (embedded night theme) is a recorded
@@ -179,7 +188,7 @@ public:
 		}
 
 		const auto height = _article.resizeGetHeight(viewportWidth);
-		if (height <= 0 || height > 65536) {
+		if (height <= 0 || height * scale > 65536.) {
 			return fail(
 				u"renderer.layout"_q,
 				u"layout produced an invalid height"_q);
@@ -187,8 +196,9 @@ public:
 		_article.setVisibleTopBottom(0, height);
 
 		auto image = QImage(
-			QSize(viewportWidth, height),
+			QSize(viewportWidth, height) * scale,
 			QImage::Format_ARGB32_Premultiplied);
+		image.setDevicePixelRatio(scale);
 		image.fill(st::historyComposeAreaBg->c);
 		{
 			auto p = Painter(&image);
@@ -230,6 +240,9 @@ public:
 		metadata.insert(u"status"_q, u"ok"_q);
 		metadata.insert(u"width"_q, output.image.width());
 		metadata.insert(u"height"_q, output.image.height());
+		// width/height above are physical pixels (viewportWidth*scale);
+		// geometry and hit targets below stay in logical pixels.
+		metadata.insert(u"scale"_q, scale);
 		metadata.insert(u"diagnostics"_q, diagnostics);
 		metadata.insert(u"geometry"_q, geometry);
 		metadata.insert(u"hitTargets"_q, QJsonArray());
