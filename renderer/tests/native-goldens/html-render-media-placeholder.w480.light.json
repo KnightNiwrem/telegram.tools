@@ -2,7 +2,7 @@
     "diagnostics": [
         {
             "code": "renderer.html-media-placeholder",
-            "message": "1 media item(s) rendered as placeholders; register bytes for their src to show content",
+            "message": "1 media source(s) unresolved; photo and video blocks render placeholders until bytes are registered for their src (other media kinds do not render sessionless yet)",
             "severity": "info"
         }
     ],

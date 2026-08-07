@@ -81,6 +81,61 @@ function shortRef(ref: string): string {
   return ref.length > 80 ? `${ref.slice(0, 77)}…` : ref;
 }
 
+/** Absolute URL the assets panel may fetch on click. Canonical blocks-mode
+ * handles (e.g. "m0") and relative html sources are not fetchable — they
+ * would resolve against this origin — so they stay upload-only. */
+function loadableUrl(ref: string): URL | null {
+  try {
+    const url = new URL(ref);
+    return ["https:", "http:", "data:", "blob:"].includes(url.protocol)
+      ? url
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const OVERSIZED_MESSAGE = `larger than the ${
+  MAX_MEDIA_BYTES / (1024 * 1024)
+} MB limit`;
+
+/** Reads a response body enforcing the byte cap while streaming, so an
+ * unbounded (chunked / lying Content-Length) response cannot exhaust
+ * memory before the size check. */
+async function readBodyCapped(response: Response): Promise<Uint8Array> {
+  const declared = Number(response.headers.get("content-length") ?? 0);
+  if (declared > MAX_MEDIA_BYTES) {
+    throw new Error(OVERSIZED_MESSAGE);
+  }
+  if (response.body === null) {
+    const buffer = await response.arrayBuffer();
+    if (buffer.byteLength > MAX_MEDIA_BYTES) {
+      throw new Error(OVERSIZED_MESSAGE);
+    }
+    return new Uint8Array(buffer);
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > MAX_MEDIA_BYTES) {
+      await reader.cancel();
+      throw new Error(OVERSIZED_MESSAGE);
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes;
+}
+
 function dimensionsLabel(result: RenderResult): string {
   const scale = result.scale ?? 1;
   const width = Math.round(result.width / scale);
@@ -141,6 +196,8 @@ export function RichMessageEditor(
 
   const renderer = useRef<RichMessageRenderer | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
+  const assetLoadGenerations = useRef(new Map<string, number>());
+  const assetLoadCounter = useRef(0);
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
   );
@@ -322,6 +379,20 @@ export function RichMessageEditor(
     mediaAssets.value = { ...mediaAssets.value, [ref]: status };
   }
 
+  // Superseded-load guard: each load claims a fresh generation for its
+  // ref; a completion whose generation is no longer current (newer load,
+  // upload, or Clear) must not register bytes or touch the status.
+  function beginAssetLoad(ref: string): number {
+    const generation = ++assetLoadCounter.current;
+    assetLoadGenerations.current.set(ref, generation);
+    setAssetStatus(ref, { state: "loading" });
+    return generation;
+  }
+
+  function assetLoadCurrent(ref: string, generation: number): boolean {
+    return assetLoadGenerations.current.get(ref) === generation;
+  }
+
   function registerAssetBytes(
     ref: string,
     bytes: Uint8Array,
@@ -330,10 +401,7 @@ export function RichMessageEditor(
     const active = renderer.current;
     if (active === null) return;
     if (bytes.length > MAX_MEDIA_BYTES) {
-      setAssetStatus(ref, {
-        state: "error",
-        message: `larger than the ${MAX_MEDIA_BYTES / (1024 * 1024)} MB limit`,
-      });
+      setAssetStatus(ref, { state: "error", message: OVERSIZED_MESSAGE });
       return;
     }
     try {
@@ -348,37 +416,27 @@ export function RichMessageEditor(
   /** Explicit, per-click asset loading: the renderer itself never fetches
    * a src; only this user action pulls bytes into the preview. */
   async function loadAssetFromUrl(ref: string) {
-    setAssetStatus(ref, { state: "loading" });
-    let url: URL;
-    try {
-      url = new URL(ref, globalThis.location?.href);
-    } catch {
-      setAssetStatus(ref, { state: "error", message: "not a valid URL" });
-      return;
-    }
-    if (!["https:", "http:", "data:", "blob:"].includes(url.protocol)) {
+    const url = loadableUrl(ref);
+    if (url === null) {
       setAssetStatus(ref, {
         state: "error",
-        message: `cannot load ${url.protocol} URLs — upload the file instead`,
+        message: "not a fetchable URL — upload the file instead",
       });
       return;
     }
+    const generation = beginAssetLoad(ref);
     try {
       const response = await fetch(url, { mode: "cors" });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      const declared = Number(response.headers.get("content-length") ?? 0);
-      if (declared > MAX_MEDIA_BYTES) {
-        throw new Error(
-          `larger than the ${MAX_MEDIA_BYTES / (1024 * 1024)} MB limit`,
-        );
-      }
-      const buffer = await response.arrayBuffer();
+      const bytes = await readBodyCapped(response);
       const mimeType = response.headers.get("content-type")?.split(";")[0] ??
         "";
-      registerAssetBytes(ref, new Uint8Array(buffer), mimeType);
+      if (!assetLoadCurrent(ref, generation)) return;
+      registerAssetBytes(ref, bytes, mimeType);
     } catch (error) {
+      if (!assetLoadCurrent(ref, generation)) return;
       // Opaque network failures on cross-origin hosts are most often CORS.
       const detail = error instanceof TypeError
         ? "fetch failed (likely CORS) — upload the file instead"
@@ -388,16 +446,23 @@ export function RichMessageEditor(
   }
 
   async function loadAssetFromFile(ref: string, file: File) {
-    setAssetStatus(ref, { state: "loading" });
+    const generation = beginAssetLoad(ref);
+    if (file.size > MAX_MEDIA_BYTES) {
+      setAssetStatus(ref, { state: "error", message: OVERSIZED_MESSAGE });
+      return;
+    }
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
+      if (!assetLoadCurrent(ref, generation)) return;
       registerAssetBytes(ref, bytes, file.type);
     } catch (error) {
+      if (!assetLoadCurrent(ref, generation)) return;
       setAssetStatus(ref, { state: "error", message: String(error) });
     }
   }
 
   function clearAssets() {
+    assetLoadGenerations.current.clear();
     renderer.current?.clearMedia();
     mediaAssets.value = {};
     rerender();
@@ -561,14 +626,16 @@ export function RichMessageEditor(
               </span>
               <span class="flex-1" />
               {renderResult.value!.mediaRefs!.some((entry) =>
-                !entry.resolved
+                !entry.resolved && loadableUrl(entry.ref) !== null
               ) && (
                 <button
                   type="button"
                   class="text-xs border border-border rounded px-2 py-1"
                   onClick={() => {
                     for (const entry of renderResult.value?.mediaRefs ?? []) {
-                      if (!entry.resolved) loadAssetFromUrl(entry.ref);
+                      if (!entry.resolved && loadableUrl(entry.ref) !== null) {
+                        loadAssetFromUrl(entry.ref);
+                      }
                     }
                   }}
                 >
@@ -598,22 +665,24 @@ export function RichMessageEditor(
                     : entry.resolved || status?.state === "loaded"
                     ? <span class="text-green-600">loaded</span>
                     : <span class="opacity-60">placeholder</span>}
-                  <button
-                    type="button"
-                    class="border border-border rounded px-2 py-1"
-                    disabled={status?.state === "loading"}
-                    onClick={() => loadAssetFromUrl(entry.ref)}
-                  >
-                    {entry.resolved || status?.state === "loaded"
-                      ? "Reload"
-                      : "Load"}
-                  </button>
+                  {loadableUrl(entry.ref) !== null && (
+                    <button
+                      type="button"
+                      class="border border-border rounded px-2 py-1"
+                      disabled={status?.state === "loading"}
+                      onClick={() => loadAssetFromUrl(entry.ref)}
+                    >
+                      {entry.resolved || status?.state === "loaded"
+                        ? "Reload"
+                        : "Load"}
+                    </button>
+                  )}
                   <label class="border border-border rounded px-2 py-1 cursor-pointer">
                     Upload…
                     <input
                       type="file"
                       class="hidden"
-                      accept="image/*,video/*,audio/*"
+                      accept="image/*"
                       onChange={(event) => {
                         const file = event.currentTarget.files?.[0];
                         if (file !== undefined) {

@@ -61,21 +61,46 @@ public:
 }
 
 // The prepare stage drops photo/video blocks without positive dimensions;
-// a registered asset can supply them when the source declared none.
+// a registered asset can supply the missing ones. A declared dimension is
+// kept and only its missing counterpart derived from the asset's ratio.
+void BackfillMissingDimensions(int *width, int *height, QSize asset) {
+	if ((*width > 0 && *height > 0) || asset.isEmpty()) {
+		return;
+	} else if (*width > 0) {
+		*height = std::max(
+			qRound(*width * double(asset.height()) / asset.width()),
+			1);
+	} else if (*height > 0) {
+		*width = std::max(
+			qRound(*height * double(asset.width()) / asset.height()),
+			1);
+	} else {
+		*width = asset.width();
+		*height = asset.height();
+	}
+}
+
 void BackfillMediaDimensions(
 		std::vector<Iv::RichPage::Block> &blocks,
 		const SessionlessMediaRuntime &runtime) {
 	using Kind = Iv::RichPage::BlockKind;
 	for (auto &block : blocks) {
-		if ((block.kind == Kind::Photo || block.kind == Kind::Video)
-			&& (block.width <= 0 || block.height <= 0)) {
-			const auto size = runtime.assetDimensions(
-				(block.kind == Kind::Photo)
+		if (block.kind == Kind::Photo || block.kind == Kind::Video) {
+			BackfillMissingDimensions(
+				&block.width,
+				&block.height,
+				runtime.assetDimensions((block.kind == Kind::Photo)
 					? block.photoId
-					: block.documentId);
-			if (!size.isEmpty()) {
-				block.width = size.width();
-				block.height = size.height();
+					: block.documentId));
+		}
+		for (auto &item : block.mediaItems) {
+			if (item.kind == Kind::Photo || item.kind == Kind::Video) {
+				BackfillMissingDimensions(
+					&item.width,
+					&item.height,
+					runtime.assetDimensions((item.kind == Kind::Photo)
+						? item.photoId
+						: item.documentId));
 			}
 		}
 		BackfillMediaDimensions(block.blocks, runtime);
@@ -262,8 +287,10 @@ public:
 					Diagnostic::Severity::Info,
 					u"renderer.html-media-placeholder"_q,
 					QString::number(unresolved)
-						+ u" media item(s) rendered as placeholders; "
-						"register bytes for their src to show content"_q,
+						+ u" media source(s) unresolved; photo and video "
+						"blocks render placeholders until bytes are "
+						"registered for their src (other media kinds do "
+						"not render sessionless yet)"_q,
 					QString(),
 				}));
 			}
@@ -307,6 +334,9 @@ public:
 			_mediaStore,
 			std::move(media));
 		BackfillMediaDimensions(page->blocks, *mediaRuntime);
+		// Media blocks sample their static assets at this density; layout
+		// stays logical (the canonical golden profile keeps scale 1).
+		_article.setMediaPixelScale(scale);
 		auto prepared = Iv::Markdown::TryPrepareNativeInstantView({
 			.richPage = page,
 			.mediaRuntime = mediaRuntime,

@@ -1,6 +1,6 @@
 {
   "id": "html-render-media-collage",
-  "description": "HTML import rendering: plain <img> inside <tg-collage> is recognized by TDesktop's importer (own-media markup not required inside a media group); sessionless, both children bind src placeholders and render as a grouped-media collage of unloaded placeholders.",
+  "description": "HTML import rendering: plain <img> inside <tg-collage> is recognized by TDesktop's importer (own-media markup not required inside a media group); sessionless, both children bind src placeholders reported in mediaRefs/diagnostics, but grouped media has no sessionless block yet, so the collage itself occupies zero height (BUILD-STATUS Phase 8) — this fixture pins the binding and the collapsed layout, not a visible collage.",
   "input": {
     "html": "<p>Gallery:</p><tg-collage><img src=\"https://example.com/a.jpg\" width=\"640\" height=\"360\"><img src=\"https://example.com/b.jpg\" width=\"640\" height=\"480\"></tg-collage>"
   },

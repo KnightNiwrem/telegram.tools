@@ -44,10 +44,12 @@ public:
 		const auto ratio = (_intrinsic.width() > 0 && _intrinsic.height() > 0)
 			? (double(_intrinsic.height()) / _intrinsic.width())
 			: 1.;
-		_height = std::clamp(
-			int(std::lround(safe * ratio)),
-			1,
-			safe * kMaxHeightPerWidth);
+		// Clamp before narrowing: extreme declared ratios would overflow
+		// the int conversion and dodge the cap entirely.
+		_height = int(std::lround(std::clamp(
+			safe * ratio,
+			1.,
+			double(safe) * kMaxHeightPerWidth)));
 		return _height;
 	}
 

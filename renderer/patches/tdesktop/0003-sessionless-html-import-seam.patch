@@ -1,5 +1,5 @@
 diff --git a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
-index 41a30ae..a17d6cc 100644
+index 41a30ae..5c0ef6e 100644
 --- a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
 +++ b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
 @@ -239,7 +239,7 @@ constexpr auto kMaxCellLength = 4096;
@@ -31,7 +31,7 @@ index 41a30ae..a17d6cc 100644
  		result.documentId = id;
  		result.document = document;
  		return true;
-@@ -276,9 +278,36 @@ constexpr auto kMaxCellLength = 4096;
+@@ -276,9 +278,39 @@ constexpr auto kMaxCellLength = 4096;
  struct ImportContext {
  	Main::Session *session = nullptr;
  	QString basePath;
@@ -45,8 +45,11 @@ index 41a30ae..a17d6cc 100644
 +		ImportContext &context,
 +		RichPage::Block &media,
 +		const QString &source) {
-+	const auto index = int(context.localMediaPaths.size())
-+		+ int(context.mediaSources.size());
++	// Bind mode never resolves local paths (see ConvertImportedBlock), so
++	// localMediaPaths stays empty and the two placeholder id spaces cannot
++	// interleave: bind ids index into mediaSources alone, exactly as local
++	// ids index into localMediaPaths alone.
++	const auto index = int(context.mediaSources.size());
 +	if (!context.bindMediaSources
 +		|| source.isEmpty()
 +		|| index >= kImportedMediaPlaceholderLimit) {
@@ -68,9 +71,19 @@ index 41a30ae..a17d6cc 100644
  [[nodiscard]] std::vector<RichPage::Block> ConvertImportedBlocks(
  	std::vector<TextUtilities::HtmlBlock> blocks,
  	ImportContext &context);
-@@ -381,15 +410,22 @@ struct ImportContext {
- 				block.media.source,
- 				context.basePath);
+@@ -377,19 +409,29 @@ struct ImportContext {
+ 				result,
+ 				block.media,
+ 				block.kind)) {
+-			const auto local = LocalMediaPath(
+-				block.media.source,
+-				context.basePath);
++			// Bind mode must not read the filesystem (a file: source would
++			// otherwise resolve even with an empty basePath): sources bind
++			// as opaque refs for the host to attach bytes to.
++			const auto local = context.bindMediaSources
++				? QString()
++				: LocalMediaPath(block.media.source, context.basePath);
  			if (local.isEmpty()) {
 -				return RichPage::Block();
 -			}
@@ -99,9 +112,16 @@ index 41a30ae..a17d6cc 100644
  			}
  		}
  		result.caption.text = ConvertImportedText(std::move(block.caption));
-@@ -411,15 +447,22 @@ struct ImportContext {
- 					child.media.source,
- 					context.basePath);
+@@ -407,19 +449,26 @@ struct ImportContext {
+ 					media,
+ 					child.media,
+ 					child.kind)) {
+-				const auto local = LocalMediaPath(
+-					child.media.source,
+-					context.basePath);
++				const auto local = context.bindMediaSources
++					? QString()
++					: LocalMediaPath(child.media.source, context.basePath);
  				if (local.isEmpty()) {
 -					continue;
 -				}
@@ -130,7 +150,7 @@ index 41a30ae..a17d6cc 100644
  				}
  			}
  			result.mediaItems.push_back({
-@@ -641,8 +684,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+@@ -641,8 +690,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
  		: QString();
  }
  
@@ -143,7 +163,7 @@ index 41a30ae..a17d6cc 100644
  		const QString &html,
  		const QString &basePath,
  		const RichMessageLimits &limits,
-@@ -656,6 +701,9 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+@@ -656,6 +707,9 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
  	auto context = ImportContext{
  		.session = session,
  		.basePath = basePath,
@@ -153,7 +173,7 @@ index 41a30ae..a17d6cc 100644
  	};
  	auto blocks = ConvertImportedBlocks(std::move(parsed->blocks), context);
  	if (blocks.empty() && context.localMediaPaths.isEmpty()) {
-@@ -664,12 +712,12 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+@@ -664,12 +718,12 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
  	return BlocksImportResult{
  		.blocks = std::move(blocks),
  		.localMediaPaths = std::move(context.localMediaPaths),
