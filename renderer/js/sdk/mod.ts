@@ -11,6 +11,7 @@ export * from "./types.ts";
 export {
   ABI_VERSION,
   type LoadModuleOptions,
+  type LoadProgress,
   RendererUnavailableError,
 } from "./module.ts";
 export {

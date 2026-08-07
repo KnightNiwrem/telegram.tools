@@ -14,6 +14,7 @@ import {
 import type { RenderDiagnostic } from "../renderer/js/canonical/mod.ts";
 import {
   blitToCanvas,
+  type LoadProgress,
   RenderCancelledError,
   type RenderContent,
   RendererUnavailableError,
@@ -89,6 +90,11 @@ export function RichMessageEditor() {
   const rendererStatus = useSignal<"loading" | "ready" | "unavailable">(
     "loading",
   );
+  const loadProgress = useSignal<LoadProgress>({
+    phase: "download",
+    loadedBytes: 0,
+    totalBytes: null,
+  });
   const rendererVersion = useSignal("");
   const renderResult = useSignal<RenderResult | null>(null);
 
@@ -102,12 +108,17 @@ export function RichMessageEditor() {
     RichMessageRenderer.load({
       glueUrl: RENDERER_GLUE_URL,
       locateFile: (path) => `/rich-message-renderer/${path}`,
+      onProgress: (progress) => loadProgress.value = progress,
     })
       .then((loaded) => {
         renderer.current = loaded;
         rendererStatus.value = "ready";
         rendererVersion.value =
           `${loaded.versionInfo.rendererVersion} · TDesktop ${loaded.versionInfo.tdesktopRevision}`;
+        // Render the current input immediately: the debounced effect ran
+        // before the renderer finished loading, so nothing else would
+        // paint the initial preview until the user edits something.
+        update(mode.value, source.value, width.value, theme.value);
       })
       .catch((error) => {
         rendererStatus.value = "unavailable";
@@ -229,6 +240,61 @@ export function RichMessageEditor() {
       });
   }
 
+  // Gate the editor until the renderer is actually usable: the artifact
+  // is a large one-time download plus a WebAssembly compile, and an
+  // interactive-looking editor with no preview reads as broken. The
+  // "unavailable" outcome still shows the editor (the adapter pipeline
+  // and diagnostics work without the artifact).
+  if (rendererStatus.value === "loading") {
+    const progress = loadProgress.value;
+    const mb = (bytes: number) => (bytes / (1024 * 1024)).toFixed(1);
+    return (
+      <div class="flex flex-col w-full px-5 gap-4">
+        <div class="flex flex-col items-center justify-center gap-3 border border-border rounded-lg px-6 py-16 text-center">
+          <div class="w-8 h-8 rounded-full border-2 border-current border-t-transparent animate-spin opacity-60" />
+          <p class="font-bold">Preparing the message renderer…</p>
+          {progress.phase === "download"
+            ? (
+              <>
+                <p class="text-sm opacity-75">
+                  Downloading renderer: {mb(progress.loadedBytes)} MB
+                  {progress.totalBytes !== null &&
+                    ` of ${mb(progress.totalBytes)} MB`}
+                </p>
+                {progress.totalBytes !== null && (
+                  <div class="w-64 max-w-full h-1.5 rounded-full border border-border overflow-hidden">
+                    <div
+                      class="h-full bg-current opacity-60"
+                      style={{
+                        width: `${
+                          Math.min(
+                            100,
+                            (progress.loadedBytes / progress.totalBytes) * 100,
+                          )
+                        }%`,
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            )
+            : (
+              <p class="text-sm opacity-75">
+                {progress.phase === "instantiate"
+                  ? "Compiling WebAssembly…"
+                  : "Starting the renderer…"}
+              </p>
+            )}
+          <p class="text-xs opacity-50 max-w-md">
+            The preview runs Telegram Desktop's actual message renderer compiled
+            to WebAssembly. It is downloaded once and cached by your browser for
+            future visits.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div class="flex flex-col w-full px-5 gap-4">
       <div class="flex flex-wrap gap-3 items-center">
@@ -294,7 +360,14 @@ export function RichMessageEditor() {
           {rendererStatus.value === "ready" && (
             <>
               <canvas
-                ref={canvas}
+                ref={(element) => {
+                  canvas.current = element;
+                  // The canvas mounts only once the renderer is ready, which
+                  // can be after the first render result arrived; paint it.
+                  if (element !== null && renderResult.value !== null) {
+                    blitToCanvas(renderResult.value, element);
+                  }
+                }}
                 class="border border-border rounded-lg max-w-full"
               />
               <div class="text-xs opacity-50">
