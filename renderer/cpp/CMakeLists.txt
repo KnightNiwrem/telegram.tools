@@ -91,9 +91,16 @@ if (EMSCRIPTEN)
         # supported way to add ours to Qt's list.
         -sEXPORTED_FUNCTIONS=_main,_malloc,_free,__embind_initialize_bindings
         # Same strategy as the native harness's ignore-unresolved link:
-        # app-only editor/box symbols resolve to traps; the smoke render is
-        # the tripwire. Symbols the render path needs are defined for real
-        # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp).
+        # app-only editor/box symbols become aborting JS import stubs; the
+        # smoke render and the golden gate are the tripwire. Symbols the
+        # render path needs are defined for real
+        # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp). This flag
+        # alone is INERT: Qt6::Platform appends =1 after it and the last
+        # -s setting wins, so the enforcing mechanism is the Platform
+        # rewrite in wasm-superbuild/CMakeLists.txt — do not revert that
+        # expecting this flag to hold. It stays here so the intent
+        # survives (and wins) if Qt ever stops appending its own setting.
+        -sERROR_ON_UNDEFINED_SYMBOLS=0
     )
     set_target_properties(ttr_wasm_host PROPERTIES
         OUTPUT_NAME ttr-renderer
