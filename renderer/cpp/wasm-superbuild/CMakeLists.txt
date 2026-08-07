@@ -114,6 +114,25 @@ endmacro()
 include(${cmake_helpers_loc}/external/qt/package.cmake)
 add_subdirectory(${cmake_helpers_loc}/external/qt external/qt)
 
+# Qt6::Platform appends -sERROR_ON_UNDEFINED_SYMBOLS=1 after the
+# executable's own link options, and the last -s setting wins — which
+# defeats the harness's ignore-unresolved strategy the moment a lazily
+# linked td_iv object with never-reached session-only references is
+# extracted (the html import TU, since BlocksFromHtmlSource is called).
+# Rewrite the setting on the Platform target: the emscripten setting
+# (unlike a raw wasm-ld flag) also emits aborting JS import stubs, so
+# instantiation still succeeds and any reached stub aborts loudly.
+get_target_property(ttr_qt_platform_link_options
+    Qt6::Platform
+    INTERFACE_LINK_OPTIONS)
+string(REPLACE
+    "ERROR_ON_UNDEFINED_SYMBOLS=1"
+    "ERROR_ON_UNDEFINED_SYMBOLS=0"
+    ttr_qt_platform_link_options
+    "${ttr_qt_platform_link_options}")
+set_target_properties(Qt6::Platform PROPERTIES
+    INTERFACE_LINK_OPTIONS "${ttr_qt_platform_link_options}")
+
 # --- Externals the renderer subset genuinely needs.
 add_subdirectory(${cmake_helpers_loc}/external/gsl external/gsl)
 add_subdirectory(${cmake_helpers_loc}/external/expected external/expected)
