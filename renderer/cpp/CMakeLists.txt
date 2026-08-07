@@ -94,10 +94,12 @@ if (EMSCRIPTEN)
         # app-only editor/box symbols become aborting JS import stubs; the
         # smoke render and the golden gate are the tripwire. Symbols the
         # render path needs are defined for real
-        # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp). Without
-        # this, lazily linked td_iv objects that ARE extracted (the html
-        # import TU since BlocksFromHtmlSource is called) fail the link on
-        # their never-reached session-only references.
+        # (core/wasm_platform_stubs.cpp, core/link_stubs.cpp). This flag
+        # alone is INERT: Qt6::Platform appends =1 after it and the last
+        # -s setting wins, so the enforcing mechanism is the Platform
+        # rewrite in wasm-superbuild/CMakeLists.txt — do not revert that
+        # expecting this flag to hold. It stays here so the intent
+        # survives (and wins) if Qt ever stops appending its own setting.
         -sERROR_ON_UNDEFINED_SYMBOLS=0
     )
     set_target_properties(ttr_wasm_host PROPERTIES

@@ -125,13 +125,28 @@ add_subdirectory(${cmake_helpers_loc}/external/qt external/qt)
 get_target_property(ttr_qt_platform_link_options
     Qt6::Platform
     INTERFACE_LINK_OPTIONS)
-string(REPLACE
-    "ERROR_ON_UNDEFINED_SYMBOLS=1"
-    "ERROR_ON_UNDEFINED_SYMBOLS=0"
-    ttr_qt_platform_link_options
-    "${ttr_qt_platform_link_options}")
-set_target_properties(Qt6::Platform PROPERTIES
-    INTERFACE_LINK_OPTIONS "${ttr_qt_platform_link_options}")
+if (NOT ttr_qt_platform_link_options)
+    message(STATUS
+        "Qt6::Platform sets no INTERFACE_LINK_OPTIONS; nothing to rewrite")
+else()
+    string(REPLACE
+        "ERROR_ON_UNDEFINED_SYMBOLS=1"
+        "ERROR_ON_UNDEFINED_SYMBOLS=0"
+        ttr_qt_platform_rewritten
+        "${ttr_qt_platform_link_options}")
+    if (ttr_qt_platform_rewritten STREQUAL ttr_qt_platform_link_options)
+        # No match is fine if Qt stopped forcing the setting — the
+        # executable's own =0 then wins as the last -s flag. If Qt
+        # instead changed the spelling, the link fails loudly on the
+        # extracted td_iv objects; this cannot regress silently.
+        message(STATUS
+            "Qt6::Platform no longer forces ERROR_ON_UNDEFINED_SYMBOLS=1;"
+            " leaving its link options untouched")
+    else()
+        set_target_properties(Qt6::Platform PROPERTIES
+            INTERFACE_LINK_OPTIONS "${ttr_qt_platform_rewritten}")
+    endif()
+endif()
 
 # --- Externals the renderer subset genuinely needs.
 add_subdirectory(${cmake_helpers_loc}/external/gsl external/gsl)
