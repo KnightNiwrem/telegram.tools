@@ -8,14 +8,23 @@
 #   host Qt 6.9.2 (aqtinstall)  ->   host code generators + qsb
 name: renderer-wasm
 
+# Triggers are an allowlist of the inputs that actually influence the
+# artifact or its verification. The build is not byte-reproducible, so
+# every run that publishes invalidates users' cached ~36 MB download —
+# doc edits, the TypeScript SDK (covered by ci.yml), and the lock-bump
+# commit this workflow pushes must not cause that.
 on:
   workflow_dispatch:
   push:
-    branches: [main, wasm-rich-message-renderer]
+    branches: [main]
     paths:
-      - "renderer/**"
-      # The lock-bump commit this workflow pushes must not retrigger it.
-      - "!renderer/artifact.lock.json"
+      - "renderer/cpp/**"
+      - "renderer/patches/**"
+      - "renderer/upstream/**"
+      - "renderer/schema/**"
+      - "renderer/scripts/**"
+      - "renderer/tests/**"
+      - "!renderer/**/*.md"
       - ".github/workflows/renderer-wasm.yml"
 
 # contents: write — the publish step creates a release and pushes the
