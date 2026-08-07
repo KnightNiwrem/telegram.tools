@@ -195,9 +195,23 @@ public:
 		}
 		_article.setVisibleTopBottom(0, height);
 
-		auto image = QImage(
-			QSize(viewportWidth, height) * scale,
-			QImage::Format_ARGB32_Premultiplied);
+		// Bound the physical allocation to the worst case the viewport
+		// and height limits above already allow at scale 1 (4096 x
+		// 65536); high scales must not multiply it. A null image from a
+		// failed allocation must fail the render rather than report ok
+		// with an empty bitmap.
+		const auto physical = QSize(viewportWidth, height) * scale;
+		if (double(physical.width()) * physical.height() > 4096. * 65536.) {
+			return fail(
+				u"renderer.layout"_q,
+				u"scaled output exceeds the maximum image area"_q);
+		}
+		auto image = QImage(physical, QImage::Format_ARGB32_Premultiplied);
+		if (image.isNull()) {
+			return fail(
+				u"renderer.allocation"_q,
+				u"pixel buffer allocation failed"_q);
+		}
 		image.setDevicePixelRatio(scale);
 		image.fill(st::historyComposeAreaBg->c);
 		{

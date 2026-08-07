@@ -51,8 +51,8 @@ export interface RendererAbi {
   clearMedia(handle: number): void;
   /**
    * (handle, requestJson) → pointer to a NUL-terminated UTF-8 JSON result:
-   * {status, width, height, pixelsOffset, pixelsSize, diagnostics, geometry,
-   *  hitTargets, rendererVersion, tdesktopRevision}.
+   * {status, width, height, scale, pixelsOffset, pixelsSize, diagnostics,
+   *  geometry, hitTargets, rendererVersion, tdesktopRevision}.
    * pixelsOffset/pixelsSize address the RGBA buffer inside WASM memory; the
    * buffer and the returned string stay valid until the next render on the
    * same handle or destroy(). Returns 0 only on allocation failure.
