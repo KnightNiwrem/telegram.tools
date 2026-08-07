@@ -375,7 +375,12 @@ export function RichMessageEditor(
                   canvas would squash it (CSS clamps the width while the
                   blitted inline height stays fixed). */
               }
-              <div class="overflow-x-auto">
+              <div
+                class="overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label="Rendered message preview"
+              >
                 <canvas
                   ref={(element) => {
                     canvas.current = element;
