@@ -3,7 +3,8 @@
 # renderer/LICENSE).
 #
 # Native render regression gate (plan §8 layer 3): re-renders every
-# blocks-mode fixture and compares pixels + geometry against the committed
+# renderable fixture (blocks mode, and html mode through TDesktop's
+# import path) and compares pixels + geometry against the committed
 # goldens in tests/native-goldens. Any difference fails; diffs are written
 # to tests/diffs/ for review. Run in the same environment that captured
 # the goldens (see BUILD-STATUS.md for the dev profile).
@@ -32,10 +33,16 @@ for golden in "${goldens}"/*.png; do
     deno eval '
         const [fixturePath, width] = Deno.args;
         const fixture = JSON.parse(Deno.readTextFileSync(fixturePath));
-        if (fixture.expected?.mode !== "blocks") Deno.exit(3);
+        const mode = fixture.expected?.mode;
+        const content = (mode === "blocks")
+          ? { mode, richMessage: fixture.expected.canonical }
+          : (mode === "html" && typeof fixture.input?.html === "string")
+          ? { mode, source: fixture.input.html }
+          : null;
+        if (content === null) Deno.exit(3);
         console.log(JSON.stringify({
           schemaVersion: 1,
-          content: { mode: "blocks", richMessage: fixture.expected.canonical },
+          content,
           viewportWidth: Number(width),
           theme: "light",
           scale: 1,

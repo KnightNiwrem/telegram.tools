@@ -2,7 +2,8 @@
 # Part of the telegram.tools rich-message renderer (GPL-3.0, see
 # renderer/LICENSE).
 #
-# Plan Phase 3 verification: renders every blocks-mode fixture through the
+# Plan Phase 3 verification: renders every renderable fixture (blocks
+# mode, and html mode through TDesktop's import path) through the
 # WASM artifact in a headless browser and compares dimensions and pixel
 # checksums against the committed native goldens. Any mismatch fails.
 #
@@ -55,13 +56,19 @@ deno eval '
     for (const entry of [...Deno.readDirSync(fixturesDir)].sort((a, b) => a.name < b.name ? -1 : 1)) {
       if (!entry.name.endsWith(".json")) continue;
       const fixture = JSON.parse(Deno.readTextFileSync(`${fixturesDir}/${entry.name}`));
-      if (fixture.expected?.mode !== "blocks") continue;
+      const mode = fixture.expected?.mode;
+      const content = (mode === "blocks")
+        ? { mode, richMessage: fixture.expected.canonical }
+        : (mode === "html" && typeof fixture.input?.html === "string")
+        ? { mode, source: fixture.input.html }
+        : null;
+      if (content === null) continue;
       for (const width of widths.split(",")) {
         requests.push({
           id: `${fixture.id}.w${width}.light`,
           request: {
             schemaVersion: 1,
-            content: { mode: "blocks", richMessage: fixture.expected.canonical },
+            content,
             viewportWidth: Number(width),
             theme: "light",
             scale: 1,

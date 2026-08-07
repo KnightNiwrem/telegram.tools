@@ -1,0 +1,11 @@
+{
+  "id": "html-render-structure",
+  "description": "HTML import rendering: headings, inline entities, blockquote, lists, and preformatted code through TDesktop's own import path.",
+  "input": {
+    "html": "<h1>Import test</h1><h2>Second level</h2><p>Entities: <b>bold</b>, <i>italic</i>, <u>underline</u>, <s>strike</s>, <code>mono</code> and a <a href=\"https://telegram.org\">link</a>.</p><blockquote>A quoted thought spanning enough words to wrap at narrow widths.</blockquote><ul><li>Unordered one</li><li>Unordered two</li></ul><ol><li>Ordered one</li><li>Ordered two</li></ol><pre><code>const x = 1;\nreturn x;</code></pre>"
+  },
+  "expected": {
+    "mode": "html",
+    "diagnostics": []
+  }
+}

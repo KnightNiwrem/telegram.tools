@@ -2,7 +2,8 @@
 # Part of the telegram.tools rich-message renderer (GPL-3.0, see
 # renderer/LICENSE).
 #
-# Renders every blocks-mode fixture through the native host at the canonical
+# Renders every renderable fixture (blocks mode, and html mode through
+# TDesktop's import path) through the native host at the canonical
 # profile widths and stores PNG + metadata under tests/native-goldens/
 # (plan Phase 1). Requires a built ttr_native_host and deno.
 set -euo pipefail
@@ -26,13 +27,16 @@ for fixture in "${renderer_dir}"/tests/fixtures/*.json; do
         deno eval '
             const [fixturePath, width] = Deno.args;
             const fixture = JSON.parse(Deno.readTextFileSync(fixturePath));
-            if (fixture.expected?.mode !== "blocks") Deno.exit(3);
+            const mode = fixture.expected?.mode;
+            const content = (mode === "blocks")
+              ? { mode, richMessage: fixture.expected.canonical }
+              : (mode === "html" && typeof fixture.input?.html === "string")
+              ? { mode, source: fixture.input.html }
+              : null;
+            if (content === null) Deno.exit(3);
             console.log(JSON.stringify({
               schemaVersion: 1,
-              content: {
-                mode: "blocks",
-                richMessage: fixture.expected.canonical,
-              },
+              content,
               viewportWidth: Number(width),
               theme: "light",
               scale: 1,

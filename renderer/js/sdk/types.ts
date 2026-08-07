@@ -26,6 +26,10 @@ export type RenderDirection = "auto" | "ltr" | "rtl";
 
 export type RenderContent =
   | { mode: "blocks"; richMessage: CanonicalRichMessage }
+  // html is parsed inside the artifact by TDesktop's own import path
+  // (sessionless: media is dropped with a renderer.html-media-dropped
+  // warning). markdown has no TDesktop parsing path at v7.0.9 and returns
+  // renderer.mode-unsupported until a parser choice is recorded.
   | { mode: "html"; source: string; skipEntityDetection?: boolean }
   | { mode: "markdown"; source: string; skipEntityDetection?: boolean };
 
