@@ -3,15 +3,21 @@
     ],
     "geometry": [
         {
-            "height": 0,
+            "height": 405,
             "kind": "media",
             "width": 720,
             "x": 0,
             "y": 0
         }
     ],
-    "height": 23,
+    "height": 428,
     "hitTargets": [
+    ],
+    "mediaRefs": [
+        {
+            "ref": "m0",
+            "resolved": false
+        }
     ],
     "rendererVersion": "0.1.0-dev",
     "scale": 1,

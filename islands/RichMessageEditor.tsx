@@ -68,6 +68,19 @@ Numbers are **up** and morale is ||complicated||.`;
 // output is deployed under static/rich-message-renderer/.
 const RENDERER_GLUE_URL = "/rich-message-renderer/ttr-renderer.js";
 
+// Cap on bytes crossing into WASM memory per media asset; the renderer
+// additionally rejects decodes above 4096px per side.
+const MAX_MEDIA_BYTES = 20 * 1024 * 1024;
+
+type MediaAssetStatus =
+  | { state: "loading" }
+  | { state: "loaded"; bytes: number }
+  | { state: "error"; message: string };
+
+function shortRef(ref: string): string {
+  return ref.length > 80 ? `${ref.slice(0, 77)}…` : ref;
+}
+
 function dimensionsLabel(result: RenderResult): string {
   const scale = result.scale ?? 1;
   const width = Math.round(result.width / scale);
@@ -124,6 +137,7 @@ export function RichMessageEditor(
   });
   const rendererVersion = useSignal("");
   const renderResult = useSignal<RenderResult | null>(null);
+  const mediaAssets = useSignal<Record<string, MediaAssetStatus>>({});
 
   const renderer = useRef<RichMessageRenderer | null>(null);
   const canvas = useRef<HTMLCanvasElement | null>(null);
@@ -300,6 +314,95 @@ export function RichMessageEditor(
       });
   }
 
+  function rerender() {
+    update(mode.value, source.value, width.value, theme.value, dpr.value);
+  }
+
+  function setAssetStatus(ref: string, status: MediaAssetStatus) {
+    mediaAssets.value = { ...mediaAssets.value, [ref]: status };
+  }
+
+  function registerAssetBytes(
+    ref: string,
+    bytes: Uint8Array,
+    mimeType: string,
+  ) {
+    const active = renderer.current;
+    if (active === null) return;
+    if (bytes.length > MAX_MEDIA_BYTES) {
+      setAssetStatus(ref, {
+        state: "error",
+        message: `larger than the ${MAX_MEDIA_BYTES / (1024 * 1024)} MB limit`,
+      });
+      return;
+    }
+    try {
+      active.registerMedia({ ref, bytes, mimeType });
+      setAssetStatus(ref, { state: "loaded", bytes: bytes.length });
+      rerender();
+    } catch (error) {
+      setAssetStatus(ref, { state: "error", message: String(error) });
+    }
+  }
+
+  /** Explicit, per-click asset loading: the renderer itself never fetches
+   * a src; only this user action pulls bytes into the preview. */
+  async function loadAssetFromUrl(ref: string) {
+    setAssetStatus(ref, { state: "loading" });
+    let url: URL;
+    try {
+      url = new URL(ref, globalThis.location?.href);
+    } catch {
+      setAssetStatus(ref, { state: "error", message: "not a valid URL" });
+      return;
+    }
+    if (!["https:", "http:", "data:", "blob:"].includes(url.protocol)) {
+      setAssetStatus(ref, {
+        state: "error",
+        message: `cannot load ${url.protocol} URLs — upload the file instead`,
+      });
+      return;
+    }
+    try {
+      const response = await fetch(url, { mode: "cors" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const declared = Number(response.headers.get("content-length") ?? 0);
+      if (declared > MAX_MEDIA_BYTES) {
+        throw new Error(
+          `larger than the ${MAX_MEDIA_BYTES / (1024 * 1024)} MB limit`,
+        );
+      }
+      const buffer = await response.arrayBuffer();
+      const mimeType = response.headers.get("content-type")?.split(";")[0] ??
+        "";
+      registerAssetBytes(ref, new Uint8Array(buffer), mimeType);
+    } catch (error) {
+      // Opaque network failures on cross-origin hosts are most often CORS.
+      const detail = error instanceof TypeError
+        ? "fetch failed (likely CORS) — upload the file instead"
+        : String(error instanceof Error ? error.message : error);
+      setAssetStatus(ref, { state: "error", message: detail });
+    }
+  }
+
+  async function loadAssetFromFile(ref: string, file: File) {
+    setAssetStatus(ref, { state: "loading" });
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      registerAssetBytes(ref, bytes, file.type);
+    } catch (error) {
+      setAssetStatus(ref, { state: "error", message: String(error) });
+    }
+  }
+
+  function clearAssets() {
+    renderer.current?.clearMedia();
+    mediaAssets.value = {};
+    rerender();
+  }
+
   // Gate the editor until the renderer is actually usable: the artifact
   // is a large one-time download plus a WebAssembly compile, and an
   // interactive-looking editor with no preview reads as broken. The
@@ -447,6 +550,84 @@ export function RichMessageEditor(
             </>
           )}
         </div>
+        {rendererStatus.value === "ready" &&
+          (renderResult.value?.mediaRefs?.length ?? 0) > 0 && (
+          <div class="border border-border rounded-lg p-3 text-sm flex flex-col gap-2">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="font-bold">Media assets</span>
+              <span class="text-xs opacity-50">
+                Sources are never fetched automatically — load each one
+                explicitly, or upload the file it should preview as.
+              </span>
+              <span class="flex-1" />
+              {renderResult.value!.mediaRefs!.some((entry) =>
+                !entry.resolved
+              ) && (
+                <button
+                  type="button"
+                  class="text-xs border border-border rounded px-2 py-1"
+                  onClick={() => {
+                    for (const entry of renderResult.value?.mediaRefs ?? []) {
+                      if (!entry.resolved) loadAssetFromUrl(entry.ref);
+                    }
+                  }}
+                >
+                  Load all
+                </button>
+              )}
+              <button
+                type="button"
+                class="text-xs border border-border rounded px-2 py-1"
+                onClick={clearAssets}
+              >
+                Clear loaded
+              </button>
+            </div>
+            {renderResult.value!.mediaRefs!.map((entry) => {
+              const status = mediaAssets.value[entry.ref];
+              return (
+                <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                  <span class="break-all" title={entry.ref}>
+                    {shortRef(entry.ref)}
+                  </span>
+                  <span class="flex-1" />
+                  {status?.state === "loading"
+                    ? <span class="opacity-60">loading…</span>
+                    : status?.state === "error"
+                    ? <span class="text-red-500">{status.message}</span>
+                    : entry.resolved || status?.state === "loaded"
+                    ? <span class="text-green-600">loaded</span>
+                    : <span class="opacity-60">placeholder</span>}
+                  <button
+                    type="button"
+                    class="border border-border rounded px-2 py-1"
+                    disabled={status?.state === "loading"}
+                    onClick={() => loadAssetFromUrl(entry.ref)}
+                  >
+                    {entry.resolved || status?.state === "loaded"
+                      ? "Reload"
+                      : "Load"}
+                  </button>
+                  <label class="border border-border rounded px-2 py-1 cursor-pointer">
+                    Upload…
+                    <input
+                      type="file"
+                      class="hidden"
+                      accept="image/*,video/*,audio/*"
+                      onChange={(event) => {
+                        const file = event.currentTarget.files?.[0];
+                        if (file !== undefined) {
+                          loadAssetFromFile(entry.ref, file);
+                        }
+                        event.currentTarget.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <textarea
           class="w-full h-96 p-3 font-mono text-sm bg-transparent border border-border rounded-lg resize-y"
           spellcheck={false}

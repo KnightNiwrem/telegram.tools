@@ -61,6 +61,34 @@ planned unless it was factually wrong.
   1:1 pixel size inside a keyboard-accessible horizontal-scroll region, in its
   own full-width row above the editor — scroll, never scale, so the chosen
   viewport width shows real wrapping and density.
+- **HTML media via placeholder bindings + user-consented asset loading
+  (refines Phases 7/8).** Sessionless HTML import no longer drops recognized
+  media blocks: each one gets an `ImportedMediaPlaceholderId` bound to its
+  `src` string, which becomes the renderer media-store ref. The render result
+  lists every media ref with its resolution state (`mediaRefs`). The editor
+  turns that list into an assets panel where the user explicitly loads each
+  URL (browser-side `fetch` with a byte cap, upload fallback for
+  CORS-restricted hosts) and registers the bytes through the existing
+  `registerMedia` ABI before re-rendering. The renderer core itself never
+  fetches — `src` stays an opaque dictionary key, preserving determinism and
+  the no-network guarantee. The parser gate is intentionally untouched: plain
+  `<img>` without TDesktop's own-media markup keeps authentic local-import
+  semantics (ignored).
+- **Sessionless hosted media blocks (Phase 8, corrects an assumption).**
+  TDesktop's only `HostedMediaBlockFactory` implementation is session-bound
+  (`IvHistoryViewMediaBlockFactory` over `HistoryView::Media`), so photo and
+  video blocks had *never* occupied space in this harness — there is no
+  upstream "unloaded placeholder" visual to inherit sessionless. The harness
+  now provides its own factory (`cpp/core/sessionless_media_blocks.cpp`):
+  layout is pure arithmetic from the declared dimensions (ratio clamped to
+  4:1 against hostile attributes), painting draws the registered static
+  asset aspect-fit over `imageBg`, and a flat `windowBgOver` fill stands in
+  when no bytes are registered — geometry is identical before and after
+  load, per the Phase 8 verification requirement. Blocks whose source
+  declares no dimensions get them backfilled from the registered asset's
+  decoded size (without bytes *and* without dimensions the prepare stage
+  still drops the block, upstream behavior). Audio, map, channel, and
+  grouped-media blocks remain unimplemented sessionless (zero height).
 
 ## 2. Initial scope and eventual scope
 

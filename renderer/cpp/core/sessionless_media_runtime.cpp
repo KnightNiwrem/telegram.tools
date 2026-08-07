@@ -4,6 +4,8 @@ exception, see renderer/LICENSE).
 */
 #include "core/sessionless_media_runtime.h"
 
+#include "core/sessionless_media_blocks.h"
+
 #include "ui/dynamic_image.h"
 
 #include <QtCore/QBuffer>
@@ -169,7 +171,8 @@ std::shared_ptr<const MediaAsset> MediaStore::lookup(
 SessionlessMediaRuntime::SessionlessMediaRuntime(
 	std::shared_ptr<const MediaStore> store,
 	std::vector<MediaIdBinding> bindings)
-: _store(std::move(store)) {
+: _store(std::move(store))
+, _hostedFactory(MakeSessionlessMediaBlockFactory(this)) {
 	for (auto &binding : bindings) {
 		_refsById.emplace(binding.id, std::move(binding.ref));
 	}
@@ -200,6 +203,16 @@ std::shared_ptr<Iv::Markdown::PhotoRuntime> SessionlessMediaRuntime::resolvePhot
 auto SessionlessMediaRuntime::resolveDocument(uint64 documentId) const
 -> std::shared_ptr<Iv::Markdown::DocumentRuntime> {
 	return std::make_shared<AssetDocumentRuntime>(assetById(documentId));
+}
+
+auto SessionlessMediaRuntime::hostedMediaBlockFactory() const
+-> std::shared_ptr<Iv::Markdown::HostedMediaBlockFactory> {
+	return _hostedFactory;
+}
+
+QSize SessionlessMediaRuntime::assetDimensions(uint64 id) const {
+	const auto asset = assetById(id);
+	return asset ? asset->decoded.size() : QSize();
 }
 
 } // namespace Ttr

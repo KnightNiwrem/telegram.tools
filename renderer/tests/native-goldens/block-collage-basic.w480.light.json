@@ -6,6 +6,20 @@
     "height": 1,
     "hitTargets": [
     ],
+    "mediaRefs": [
+        {
+            "ref": "m0",
+            "resolved": false
+        },
+        {
+            "ref": "m1",
+            "resolved": false
+        },
+        {
+            "ref": "m2",
+            "resolved": false
+        }
+    ],
     "rendererVersion": "0.1.0-dev",
     "scale": 1,
     "status": "ok",

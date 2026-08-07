@@ -54,6 +54,13 @@ public:
 		uint64 photoId) const override;
 	std::shared_ptr<Iv::Markdown::DocumentRuntime> resolveDocument(
 		uint64 documentId) const override;
+	std::shared_ptr<Iv::Markdown::HostedMediaBlockFactory>
+	hostedMediaBlockFactory() const override;
+
+	// Decoded pixel size of the asset bound to this id, or an invalid size:
+	// used to backfill photo/video blocks whose source declared no
+	// dimensions (the prepare stage drops dimensionless media).
+	[[nodiscard]] QSize assetDimensions(uint64 id) const;
 
 private:
 	[[nodiscard]] std::shared_ptr<const MediaAsset> assetById(
@@ -61,6 +68,7 @@ private:
 
 	std::shared_ptr<const MediaStore> _store;
 	std::map<uint64, QString> _refsById;
+	std::shared_ptr<Iv::Markdown::HostedMediaBlockFactory> _hostedFactory;
 
 };
 

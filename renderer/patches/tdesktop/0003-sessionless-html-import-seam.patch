@@ -1,5 +1,5 @@
 diff --git a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
-index 41a30ae..1dc9c07 100644
+index 41a30ae..a17d6cc 100644
 --- a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
 +++ b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
 @@ -239,7 +239,7 @@ constexpr auto kMaxCellLength = 4096;
@@ -31,31 +31,106 @@ index 41a30ae..1dc9c07 100644
  		result.documentId = id;
  		result.document = document;
  		return true;
-@@ -277,6 +279,7 @@ struct ImportContext {
+@@ -276,9 +278,36 @@ constexpr auto kMaxCellLength = 4096;
+ struct ImportContext {
  	Main::Session *session = nullptr;
  	QString basePath;
++	bool bindMediaSources = false;
  	QStringList localMediaPaths;
++	std::vector<ImportedMediaSourceBinding> mediaSources;
 +	int droppedMedia = 0;
  };
  
++[[nodiscard]] bool BindImportedMediaSource(
++		ImportContext &context,
++		RichPage::Block &media,
++		const QString &source) {
++	const auto index = int(context.localMediaPaths.size())
++		+ int(context.mediaSources.size());
++	if (!context.bindMediaSources
++		|| source.isEmpty()
++		|| index >= kImportedMediaPlaceholderLimit) {
++		return false;
++	}
++	const auto placeholder = ImportedMediaPlaceholderId(index);
++	context.mediaSources.push_back({
++		.id = placeholder,
++		.source = source,
++	});
++	if (media.kind == RichPage::BlockKind::Photo) {
++		media.photoId = placeholder;
++	} else {
++		media.documentId = placeholder;
++	}
++	return true;
++}
++
  [[nodiscard]] std::vector<RichPage::Block> ConvertImportedBlocks(
-@@ -381,6 +384,7 @@ struct ImportContext {
+ 	std::vector<TextUtilities::HtmlBlock> blocks,
+ 	ImportContext &context);
+@@ -381,15 +410,22 @@ struct ImportContext {
  				block.media.source,
  				context.basePath);
  			if (local.isEmpty()) {
-+				++context.droppedMedia;
- 				return RichPage::Block();
+-				return RichPage::Block();
+-			}
+-			const auto placeholder = ImportedMediaPlaceholderId(
+-				int(context.localMediaPaths.size()));
+-			context.localMediaPaths.push_back(local);
+-			if (result.kind == RichPage::BlockKind::Photo) {
+-				result.photoId = placeholder;
++				if (!BindImportedMediaSource(
++						context,
++						result,
++						block.media.source)) {
++					++context.droppedMedia;
++					return RichPage::Block();
++				}
+ 			} else {
+-				result.documentId = placeholder;
++				const auto placeholder = ImportedMediaPlaceholderId(
++					int(context.localMediaPaths.size()));
++				context.localMediaPaths.push_back(local);
++				if (result.kind == RichPage::BlockKind::Photo) {
++					result.photoId = placeholder;
++				} else {
++					result.documentId = placeholder;
++				}
  			}
- 			const auto placeholder = ImportedMediaPlaceholderId(
-@@ -411,6 +415,7 @@ struct ImportContext {
+ 		}
+ 		result.caption.text = ConvertImportedText(std::move(block.caption));
+@@ -411,15 +447,22 @@ struct ImportContext {
  					child.media.source,
  					context.basePath);
  				if (local.isEmpty()) {
-+					++context.droppedMedia;
- 					continue;
+-					continue;
+-				}
+-				const auto placeholder = ImportedMediaPlaceholderId(
+-					int(context.localMediaPaths.size()));
+-				context.localMediaPaths.push_back(local);
+-				if (media.kind == RichPage::BlockKind::Photo) {
+-					media.photoId = placeholder;
++					if (!BindImportedMediaSource(
++							context,
++							media,
++							child.media.source)) {
++						++context.droppedMedia;
++						continue;
++					}
+ 				} else {
+-					media.documentId = placeholder;
++					const auto placeholder = ImportedMediaPlaceholderId(
++						int(context.localMediaPaths.size()));
++					context.localMediaPaths.push_back(local);
++					if (media.kind == RichPage::BlockKind::Photo) {
++						media.photoId = placeholder;
++					} else {
++						media.documentId = placeholder;
++					}
  				}
- 				const auto placeholder = ImportedMediaPlaceholderId(
-@@ -641,8 +646,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+ 			}
+ 			result.mediaItems.push_back({
+@@ -641,8 +684,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
  		: QString();
  }
  
@@ -68,9 +143,21 @@ index 41a30ae..1dc9c07 100644
  		const QString &html,
  		const QString &basePath,
  		const RichMessageLimits &limits,
-@@ -665,11 +672,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+@@ -656,6 +701,9 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+ 	auto context = ImportContext{
+ 		.session = session,
+ 		.basePath = basePath,
++		// Source bindings must never interleave with basePath-local
++		// placeholders: local ids index into localMediaPaths alone.
++		.bindMediaSources = !session && basePath.isEmpty(),
+ 	};
+ 	auto blocks = ConvertImportedBlocks(std::move(parsed->blocks), context);
+ 	if (blocks.empty() && context.localMediaPaths.isEmpty()) {
+@@ -664,12 +712,12 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+ 	return BlocksImportResult{
  		.blocks = std::move(blocks),
  		.localMediaPaths = std::move(context.localMediaPaths),
++		.mediaSources = std::move(context.mediaSources),
  		.truncated = parsed->truncated,
 +		.droppedMedia = context.droppedMedia,
  	};
@@ -82,24 +169,37 @@ index 41a30ae..1dc9c07 100644
  		const RichMessageLimits &limits,
  		int usedBlocks) {
 diff --git a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
-index 9002e9f..73d778c 100644
+index 9002e9f..73a9147 100644
 --- a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
 +++ b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
-@@ -51,6 +51,7 @@ struct BlocksImportResult {
+@@ -47,10 +47,17 @@ inline constexpr auto kImportedMediaPlaceholderLimit = 4096;
+ 		: std::nullopt;
+ }
+ 
++struct ImportedMediaSourceBinding {
++	uint64 id = 0;
++	QString source;
++};
++
+ struct BlocksImportResult {
  	std::vector<RichPage::Block> blocks;
  	QStringList localMediaPaths;
++	std::vector<ImportedMediaSourceBinding> mediaSources;
  	bool truncated = false;
 +	int droppedMedia = 0;
  };
  
  [[nodiscard]] TableImportLimits TableImportLimitsFor(
-@@ -69,6 +70,16 @@ struct BlocksImportResult {
+@@ -69,6 +76,19 @@ struct BlocksImportResult {
  	const RichMessageLimits &limits,
  	int usedBlocks);
  
 +// The session may be null: remote photo/document identities then resolve
-+// to nothing and media falls back to basePath-local paths or is dropped
-+// (counted in BlocksImportResult::droppedMedia).
++// to nothing and media falls back to basePath-local paths; without either,
++// sessionless imports keep the block under a placeholder id bound to its
++// source string (BlocksImportResult::mediaSources) so the host may attach
++// bytes for that source itself. Media is dropped (counted in
++// BlocksImportResult::droppedMedia) only when no binding is possible.
 +[[nodiscard]] std::optional<BlocksImportResult> BlocksFromHtmlSource(
 +	Main::Session *session,
 +	const QString &html,
