@@ -1,0 +1,8 @@
+{
+  "repo": "KnightNiwrem/telegram.tools",
+  "tag": "renderer-wasm-706b600",
+  "files": {
+    "ttr-renderer.js": "cfb343e955fd439b768a1ca1ada84519ef0a3ddc2bfa635853a22d4c1621c6b0",
+    "ttr-renderer.wasm": "00c9fdc7d3b4d9a12b12bc0092ff9264a0464b7def70865c8462de22c4f72660"
+  }
+}
