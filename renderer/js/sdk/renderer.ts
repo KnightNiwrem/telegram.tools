@@ -76,6 +76,7 @@ export class RichMessageRenderer {
     options: RichMessageRendererOptions,
   ): Promise<RichMessageRenderer> {
     const module = await loadModule(options);
+    options.onProgress?.({ phase: "initialize" });
     const abi = bindAbi(module);
     const abiVersion = abi.abiVersion();
     if (abiVersion !== ABI_VERSION) {

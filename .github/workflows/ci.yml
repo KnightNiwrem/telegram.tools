@@ -1,0 +1,54 @@
+# Checks-only CI. Deployment is handled by Deno Deploy's native GitHub
+# integration (build command: `deno task build`), which reacts to pushes
+# on its own — the previous deployctl-based Deploy workflow this file
+# replaces would have deployed the same commit a second time through the
+# legacy path.
+#
+# Gating steps are the ones that are green today. Lint, full repo
+# type-checking, and the lib tests carry pre-existing findings
+# (rules-of-hooks in older islands; Uint8Array strictness under current
+# Deno in lib/file_id.ts, lib/session_string.ts,
+# workers/connectivity_test.ts) — they run as non-gating visibility
+# steps; flip continue-on-error off as that debt is paid down.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Format check
+        run: deno fmt --check
+
+      - name: Renderer TypeScript tests
+        run: deno test --allow-read renderer/tests/
+
+      - name: Build (artifact fetch + Fresh build, no deploy)
+        run: deno task build
+
+      - name: Lint (non-gating, pre-existing findings)
+        continue-on-error: true
+        run: deno lint
+
+      - name: Type check (non-gating, pre-existing findings)
+        continue-on-error: true
+        run: deno check **/*.ts && deno check **/*.tsx
+
+      - name: Lib tests (non-gating, blocked on type-check findings)
+        continue-on-error: true
+        run: deno test -A

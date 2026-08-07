@@ -15,7 +15,17 @@
   "lint": {
     "rules": { "tags": ["fresh", "recommended"], "exclude": ["no-window"] }
   },
-  "exclude": ["**/_fresh/*", "static/", "lib/dexie-live-query"],
+  "exclude": [
+    "**/_fresh/*",
+    "static/",
+    "lib/dexie-live-query",
+    "renderer/upstream/",
+    "renderer/patches/",
+    "renderer/schema/",
+    "renderer/tests/native-goldens/",
+    "renderer/tests/integration/",
+    "telegram-rich-message-wasm-implementation-plan.md"
+  ],
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.6.8/",
     "preact": "https://esm.sh/preact@10.19.6",

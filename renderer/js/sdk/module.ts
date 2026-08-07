@@ -90,13 +90,75 @@ export function bindAbi(module: EmscriptenModule): RendererAbi {
 
 export type ModuleFactory = (options: {
   locateFile?: (path: string) => string;
+  /** Prefetched .wasm bytes; when present the glue skips its own fetch. */
+  wasmBinary?: ArrayBuffer;
 }) => Promise<EmscriptenModule>;
+
+/** Load lifecycle notifications, in order:
+ * `download` (repeated, only when the SDK prefetches the artifact) →
+ * `instantiate` (WebAssembly compile + Emscripten runtime start) →
+ * `initialize` (Qt runtime bring-up inside the module). */
+export type LoadProgress =
+  | { phase: "download"; loadedBytes: number; totalBytes: number | null }
+  | { phase: "instantiate" }
+  | { phase: "initialize" };
 
 export interface LoadModuleOptions {
   /** URL of the Emscripten ESM glue (default export: module factory). */
   glueUrl: string;
   /** Maps emitted asset names (the .wasm file) to their served URLs. */
   locateFile?: (path: string) => string;
+  /**
+   * When set, the SDK prefetches the .wasm itself (streaming, so byte
+   * progress is observable — the artifact is tens of megabytes) and hands
+   * the bytes to the glue via `wasmBinary`; without it the glue performs
+   * its own opaque fetch.
+   */
+  onProgress?: (progress: LoadProgress) => void;
+}
+
+/** The single sidecar asset the Emscripten glue asks locateFile for. */
+const WASM_ASSET_NAME = "ttr-renderer.wasm";
+
+async function fetchWasmWithProgress(
+  options: LoadModuleOptions,
+  onProgress: (progress: LoadProgress) => void,
+): Promise<ArrayBuffer> {
+  const url = options.locateFile?.(WASM_ASSET_NAME) ??
+    new URL(WASM_ASSET_NAME, options.glueUrl).href;
+  const response = await fetch(url);
+  if (!response.ok || response.body === null) {
+    throw new RendererUnavailableError(
+      `renderer WASM artifact not fetchable from ${url} (HTTP ${response.status})`,
+    );
+  }
+  // Content-Length counts transfer (possibly compressed) bytes while the
+  // stream yields decoded bytes; only trust it as a total for identity
+  // encoding, otherwise report byte counts without a known total.
+  const contentLength = Number(response.headers.get("content-length"));
+  const encoded = (response.headers.get("content-encoding") ?? "") !== "";
+  const totalBytes = !encoded && Number.isFinite(contentLength) &&
+      contentLength > 0
+    ? contentLength
+    : null;
+  const chunks: Uint8Array[] = [];
+  let loadedBytes = 0;
+  const reader = response.body.getReader();
+  onProgress({ phase: "download", loadedBytes, totalBytes });
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    loadedBytes += value.length;
+    onProgress({ phase: "download", loadedBytes, totalBytes });
+  }
+  const bytes = new Uint8Array(loadedBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return bytes.buffer;
 }
 
 export class RendererUnavailableError extends Error {
@@ -127,8 +189,12 @@ export async function loadModule(
       `renderer glue at ${options.glueUrl} does not export a module factory`,
     );
   }
+  const wasmBinary = options.onProgress !== undefined
+    ? await fetchWasmWithProgress(options, options.onProgress)
+    : undefined;
+  options.onProgress?.({ phase: "instantiate" });
   try {
-    return await factory({ locateFile: options.locateFile });
+    return await factory({ locateFile: options.locateFile, wasmBinary });
   } catch (cause) {
     throw new RendererUnavailableError(
       "renderer WASM module failed to instantiate",
