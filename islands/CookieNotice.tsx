@@ -7,11 +7,12 @@ import { storedBoolean } from "../lib/stored_signals.tsx";
 const hide = storedBoolean(false, "hide-cookie-notice");
 
 export function CookieNotice() {
+  const present = useComputed(() => !hide.value);
   if (!IS_BROWSER) {
     return null;
   }
   return (
-    <Presence present={useComputed(() => !hide.value)}>
+    <Presence present={present}>
       <div
         class={`bg-foreground-transparent fixed bottom-0 left-0 backdrop-blur-2xl w-full p-5 ${
           hide.value
@@ -25,6 +26,7 @@ export function CookieNotice() {
             help us improve the project.
           </div>
           <button
+            type="button"
             onClick={() => hide.value = true}
             class="text-grammy self-end xl:self-auto"
           >

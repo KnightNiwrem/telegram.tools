@@ -8,17 +8,15 @@
     "fetch-renderer": "deno run --allow-read --allow-write --allow-net scripts/fetch-renderer-artifact.ts",
     "build": "deno task fetch-renderer && deno run -A dev.ts build",
     "preview": "deno run -A main.ts",
-    "update": "deno run -A -r https://fresh.deno.dev/update .",
-    "build-workers": "deno run -A workers/_build.ts"
+    "update": "deno run -A -r https://fresh.deno.dev/update ."
   },
-  "test": { "include": ["./lib"] },
+  "test": { "include": ["./renderer/tests"] },
   "lint": {
     "rules": { "tags": ["fresh", "recommended"], "exclude": ["no-window"] }
   },
   "exclude": [
     "**/_fresh/*",
     "static/",
-    "lib/dexie-live-query",
     "renderer/upstream/",
     "renderer/patches/",
     "renderer/schema/",
@@ -36,19 +34,8 @@
     "@twind/preset-tailwind": "https://esm.sh/@twind/preset-tailwind@1.1.4/",
     "@twind/preset-autoprefix": "https://esm.sh/@twind/preset-autoprefix@1.0.7/",
     "$std/": "https://deno.land/std@0.224.0/",
-    "mtkruto/": "https://deno.land/x/mtkruto@0.2.5/",
-    "grammy/": "https://deno.land/x/grammy@v1.23.0/",
-    "https://cdn.skypack.dev/debug@4.3.4": "https://esm.sh/debug@4.3.4",
-    "dexie": "https://esm.sh/dexie@3.2.6",
-    "dexie-react-hooks": "https://esm.sh/dexie-react-hooks@1.1.7?alias=react:preact/compat",
-    "prism-json": "https://esm.sh/prismjs@1.29.0/components/prism-json?no-check",
-    "prismjs": "https://esm.sh/prismjs@1.29.0",
-    "ipaddr.js": "https://esm.sh/ipaddr.js@2.1.0",
     "clsx": "https://esm.sh/clsx@2.1.0",
-    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
-    "esbuild/": "https://deno.land/x/esbuild@v0.20.1/",
-    "esbuild_deno_loader/": "https://deno.land/x/esbuild_deno_loader@0.8.5/",
-    "time_ago/": "https://deno.land/x/time_ago@v1/"
+    "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1"
   },
   "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "preact" }
 }

@@ -4,7 +4,6 @@ importScripts(
 
 workbox.routing.registerRoute(
   ({ url }) =>
-    url.hostname == "telegram.tools" &&
-    (url.pathname.startsWith("/fonts/") || url.pathname.endsWith("/worker.js")),
+    url.origin == self.location.origin && url.pathname.startsWith("/fonts/"),
   new workbox.strategies.CacheFirst(),
 );

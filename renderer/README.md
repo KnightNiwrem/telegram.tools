@@ -49,7 +49,7 @@ deno test --allow-read renderer/tests/   # adapter + schema + limits tests
 # a native build must exist first (host code generators).
 renderer/scripts/build-wasm.sh
 cp renderer/dist/ttr-renderer.{js,wasm} static/rich-message-renderer/
-deno task start   # -> /rich-message-preview
+deno task start   # -> the editor at /
 ```
 
 The artifact (52 MB, 37 MB gzipped — the ~26 MB of emoji sprite PNGs are the
