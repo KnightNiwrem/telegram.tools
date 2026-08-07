@@ -1,26 +1,27 @@
 # Build and phase status
 
 Honest, current state of the implementation against the plan
-(`telegram-rich-message-wasm-implementation-plan.md`). Updated 2026-08-06.
+(`telegram-rich-message-wasm-implementation-plan.md`). Updated 2026-08-07.
 
 ## What is done and verified
 
-| Plan phase                          | State                                                                                                                                                                                                                                                                                                                                              |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 0 — provenance/licensing      | **Done.** TDesktop `v7.0.9` pinned as submodule (`a1e89e1f`), UPSTREAM.md/LICENSING.md/THIRD_PARTY_NOTICES.md recorded. Counsel sign-off on the MIT-extension boundary is an organizational action and remains open (blocking Phase 12 only).                                                                                                      |
-| Phase 1 — fixture corpus            | **Done for the input side.** 76 fixtures covering all 21 `InputRichBlock` kinds, all inline entity forms, layout edge cases, and over-limit inputs; 95 deno tests pass. Native golden captures require the native host (below); `scripts/capture-goldens.sh` is ready.                                                                             |
-| Phase 4 (TS half) — schema/contract | **Done.** Canonical JSON Schema v1, TS model + limits validator, versioned C ABI defined on both sides (`js/sdk/module.ts` ↔ `cpp/wasm-host/ttr_abi.h`).                                                                                                                                                                                           |
-| Phase 6 — grammY adapter            | **Done and tested** at `grammy_types@v4.0.0`. Exhaustive union handling with compile-time guards, source-path diagnostics, media handles.                                                                                                                                                                                                          |
-| Phase 3 — Qt/WASM build             | **Done: the core feasibility proof holds.** The artifact builds through a dedicated Emscripten superbuild (`cpp/wasm-superbuild`, since desktop-app's cmake has no Emscripten platform branch) and renders in headless Chrome. The editor page (`/`) shows real TDesktop output: headings, bold, spoiler particles, bullet lists, task checkboxes. |
-| Phase 11 — telegram.tools scaffold  | **Done as scaffold, now with live pixels.** Editor page (`/`) + `RichMessageEditor` island: three input modes, width/theme controls, debounced latest-wins loop, diagnostics panel, canonical inspector, honest no-artifact state.                                                                                                                 |
+| Plan phase                          | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 0 — provenance/licensing      | **Done.** TDesktop `v7.0.9` pinned as submodule (`a1e89e1f`), UPSTREAM.md/LICENSING.md/THIRD_PARTY_NOTICES.md recorded. Counsel sign-off on the MIT-extension boundary is an organizational action and remains open (blocking Phase 12 only).                                                                                                                                                                                                                                    |
+| Phase 1 — fixture corpus            | **Done for the input side.** 76 fixtures covering all 21 `InputRichBlock` kinds, all inline entity forms, layout edge cases, and over-limit inputs; 95 deno tests pass. Native golden captures require the native host (below); `scripts/capture-goldens.sh` is ready.                                                                                                                                                                                                           |
+| Phase 4 (TS half) — schema/contract | **Done.** Canonical JSON Schema v1, TS model + limits validator, versioned C ABI defined on both sides (`js/sdk/module.ts` ↔ `cpp/wasm-host/ttr_abi.h`).                                                                                                                                                                                                                                                                                                                         |
+| Phase 4 — render configuration      | Width ✓ (1..4096). Theme: light only (dark emits `renderer.theme-unavailable`, below). **Scale ✓**: per-request `scale` 1..4 via `QImage::setDevicePixelRatio` — layout/geometry/hit targets stay in logical pixels, physical allocation capped at the scale-1 worst case (4096×65536) with `renderer.output-size`/`renderer.allocation` diagnostics, applied scale echoed in the result; goldens and the CI geometry gate stay at scale 1. Direction: **not consumed** (below). |
+| Phase 6 — grammY adapter            | **Done and tested** at `grammy_types@v4.0.0`. Exhaustive union handling with compile-time guards, source-path diagnostics, media handles.                                                                                                                                                                                                                                                                                                                                        |
+| Phase 3 — Qt/WASM build             | **Done: the core feasibility proof holds.** The artifact builds through a dedicated Emscripten superbuild (`cpp/wasm-superbuild`, since desktop-app's cmake has no Emscripten platform branch) and renders in headless Chrome. The editor page (`/`) shows real TDesktop output: headings, bold, spoiler particles, bullet lists, task checkboxes.                                                                                                                               |
+| Phase 11 — telegram.tools scaffold  | **Done as scaffold, now with live pixels.** Editor page (`/`) + `RichMessageEditor` island: three input modes, width/theme controls, debounced latest-wins loop, diagnostics panel, canonical inspector, honest no-artifact state. Preview shows true 1:1 pixels in a keyboard-accessible horizontal-scroll region above the editor (scroll, never scale), and requests `min(devicePixelRatio, 3)` for crisp hi-DPI output, re-rendering on ratio changes.                       |
 
 ## Extraction findings that supersede the plan text
 
 - `Iv::Markdown::TryPrepareNativeInstantView` **does exist** at `v7.0.9` (the
-  plan's revalidation note said otherwise). It is the preparation entry used by
-  `RichDraftPreview`, and it takes **no session**: sessions enter only through
-  `MediaRuntime` (an interface with two pure-virtual methods) and
-  `ResolveRichMessageLimits`.
+  plan's original revalidation note said otherwise; the plan text is now
+  corrected in place). It is the preparation entry used by `RichDraftPreview`,
+  and it takes **no session**: sessions enter only through `MediaRuntime` (an
+  interface with two pure-virtual methods) and `ResolveRichMessageLimits`.
 - The whole `iv/markdown` subsystem lives in CMake target `td_iv`, which does
   not link the Data/Main layer at all. `chat_style`/`chat_theme` are
   session-free; `ChatStyle` has an isolated-palette constructor.
@@ -101,6 +102,10 @@ and it passes clean.
 - **Dark theme**: the render service currently renders the default (light)
   palette and emits `renderer.theme-unavailable` for dark until embedded
   night-palette loading is wired.
+- **Direction**: `RenderRequest.direction` exists in the TS contract but the
+  render service never reads it; BiDi shaping within text works (it is Qt's text
+  engine), but there is no explicit LTR/RTL override or RTL fixture matrix yet
+  (plan Phases 4/5).
 - **Phases 9, 10, 12, 13, 14** as described in the plan.
 
 ## Native vs WASM comparison (plan Phase 3 verification)

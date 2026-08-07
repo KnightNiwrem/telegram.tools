@@ -2,11 +2,16 @@
 
 ## Phase-by-phase implementation and verification plan
 
-Status: proposed engineering plan
+Status: active plan. Implementation status is tracked in
+`renderer/BUILD-STATUS.md`; decisions that changed after this plan was written
+are recorded in the decision log (§1.1) rather than by rewriting phase text.
 
 Initial renderer baseline: Telegram Desktop `v7.0.9`
 
-Initial product targets: `grammyjs/telegram.tools` and `grammyjs/vscode`
+Initial product target: the standalone `KnightNiwrem/telegram.tools` app
+(Deno Fresh/Preact, deployed on Deno Deploy). `grammyjs/telegram.tools` and
+`grammyjs/vscode` are the intended eventual integrations, not current
+targets — see §1.1.
 
 ## 1. North star
 
@@ -25,6 +30,37 @@ This plan deliberately does **not** use a separately implemented DOM/CSS
 renderer as the final preview. HTML, Preact, or Svelte may provide the editor
 and controls, but Telegram's visual output must be painted by code compiled
 from Telegram Desktop sources.
+
+### 1.1 Decision log — deviations from the plan as written
+
+Recorded changes of direction; the phase text below is left as originally
+planned unless it was factually wrong.
+
+- **Standalone product first.** The work lives in `KnightNiwrem/telegram.tools`,
+  trimmed to a single-purpose rich-message renderer app rather than the grammY
+  multi-tool site. Integration into `grammyjs/telegram.tools` and the grammY
+  VS Code extension (Phase 12) is deferred until the renderer itself is
+  further along. The Phase 0 licensing decision (renderer as a separately
+  distributed GPL artifact) stands and continues to gate only Phase 12.
+- **Renderer location.** The renderer lives in `renderer/` inside the app repo
+  instead of the dedicated repository §6 prefers. Splitting it out (with
+  history) is deliberately deferred.
+- **Artifact distribution (refines Phase 10).** CI publishes each verified
+  build as a GitHub release (`renderer-wasm-<shortsha>`) and pins it — tag plus
+  per-file sha256 and byte size — in `renderer/artifact.lock.json`; the deploy
+  build fetches and verifies the pinned assets. This already provides the
+  content-hashing and matched-JS/WASM guarantees Phase 10 asks for, without an
+  npm package yet.
+- **Per-request scale shipped ahead of sequence.** The Phase 4 "scale"
+  configuration item is done end-to-end: `RenderRequest.scale` (1..4) via
+  `QImage::setDevicePixelRatio`, layout kept in logical pixels, physical
+  allocation capped at the scale-1 worst case (4096×65536), applied scale
+  echoed in the result. The editor requests `min(devicePixelRatio, 3)`. The
+  canonical golden profile (§4) intentionally stays at device pixel ratio 1.
+- **Preview presentation (refines Phase 11).** The preview renders at true
+  1:1 pixel size inside a keyboard-accessible horizontal-scroll region, in its
+  own full-width row above the editor — scroll, never scale, so the chosen
+  viewport width shows real wrapping and density.
 
 ## 2. Initial scope and eventual scope
 
@@ -354,11 +390,10 @@ Telegram session or connecting to Telegram.
 
 - [ ] Trace the dependency graph beginning at:
   - `HistoryView::Controls::RichDraftPreview`;
-  - `Iv::Markdown::PrepareNativeIvBlocks` and
-    `Iv::Markdown::UpdatePreparedNativeIvLeaf`
-    (there is no `TryPrepareNativeInstantView` symbol at `v7.0.9`; native
-    preparation is entered through these two functions in
-    `iv_markdown_prepare_native_blocks.{h,cpp}`);
+  - `Iv::Markdown::TryPrepareNativeInstantView` (a revalidation note here
+    previously claimed this symbol does not exist at `v7.0.9`; it does, takes
+    no session, and is the preparation entry the harness uses — see
+    "Extraction findings" in `renderer/BUILD-STATUS.md`);
   - `Iv::Markdown::MarkdownArticle::setContent`;
   - `MarkdownArticle::resizeGetHeight` and `MarkdownArticle::paint`.
 - [ ] Confirm the extraction seam at the source level (verified against
