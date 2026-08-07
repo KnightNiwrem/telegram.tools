@@ -1,13 +1,12 @@
+// The service-worker registration and the metrics snippet are inline
+// scripts, which JSX can only express through dangerouslySetInnerHTML.
+// deno-lint-ignore-file react-no-danger
 import { type PageProps } from "$fresh/server.ts";
 import { CookieNotice } from "../islands/CookieNotice.tsx";
-import { cn } from "../lib/cn.ts";
 
 const metricsSnippet = Deno.env.get("METRICS_SNIPPET");
 
-export default function App({ Component, url }: PageProps) {
-  const layout = !["/update-explorer", "/connectivity-test"].includes(
-    url.pathname,
-  );
+export default function App({ Component }: PageProps) {
   return (
     <html>
       <head>
@@ -18,25 +17,21 @@ export default function App({ Component, url }: PageProps) {
         />
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Rich Message Preview</title>
+        <meta
+          name="description"
+          content="Preview how Telegram renders rich messages, right in your browser."
+        />
         <link rel="stylesheet" href="/fonts.css" />
         <link rel="stylesheet" href="/main.css" />
         {metricsSnippet
           ? <script dangerouslySetInnerHTML={{ __html: metricsSnippet }} />
           : null}
       </head>
-      <body
-        class={cn(
-          "font-inter bg-background text-foreground select-none",
-          layout && "p-5",
-        )}
-      >
-        {layout
-          ? (
-            <main class="mx-auto w-full max-w-[900px] flex flex-col">
-              <Component />
-            </main>
-          )
-          : <Component />}
+      <body class="font-inter bg-background text-foreground select-none p-5">
+        <main class="mx-auto w-full max-w-[900px] flex flex-col">
+          <Component />
+        </main>
         {metricsSnippet && <CookieNotice />}
       </body>
     </html>

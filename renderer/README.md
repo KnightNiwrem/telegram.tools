@@ -26,7 +26,7 @@ js/adapter-html/     HTML/Markdown input interface + fidelity-mode labels
 js/sdk/              public SDK: WASM loader, C-ABI binding, scheduling,
                      canvas host
 tests/fixtures/      Phase 1 fixture corpus (76 fixtures)
-tests/               deno tests (93 passing): fixtures, flattener, limits
+tests/               deno tests (95 passing): fixtures, flattener, limits
 scripts/             build-native / build-wasm / capture-goldens /
                      compare-renders
 ```
@@ -49,7 +49,7 @@ deno test --allow-read renderer/tests/   # adapter + schema + limits tests
 # a native build must exist first (host code generators).
 renderer/scripts/build-wasm.sh
 cp renderer/dist/ttr-renderer.{js,wasm} static/rich-message-renderer/
-deno task start   # -> /rich-message-preview
+deno task start   # -> the editor at /
 ```
 
 The artifact (52 MB, 37 MB gzipped — the ~26 MB of emoji sprite PNGs are the

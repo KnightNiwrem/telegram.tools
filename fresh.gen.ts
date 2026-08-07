@@ -5,35 +5,9 @@
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
 import * as $_middleware from "./routes/_middleware.tsx";
-import * as $connectivity_test from "./routes/connectivity-test.tsx";
-import * as $creation_date from "./routes/creation-date.tsx";
-import * as $disclaimer from "./routes/disclaimer.tsx";
-import * as $file_id_analyzer from "./routes/file-id-analyzer.tsx";
-import * as $filter_query_browser from "./routes/filter-query-browser.tsx";
 import * as $index from "./routes/index.tsx";
-import * as $inline_message_id_unpacker from "./routes/inline-message-id-unpacker.tsx";
-import * as $rich_message_preview from "./routes/rich-message-preview.tsx";
-import * as $session_string_analyzer from "./routes/session-string-analyzer.tsx";
-import * as $session_string_converter from "./routes/session-string-converter.tsx";
-import * as $session_string_generator from "./routes/session-string-generator.tsx";
-import * as $test from "./routes/test.tsx";
-import * as $update_explorer from "./routes/update-explorer.tsx";
-import * as $webhook_manager from "./routes/webhook-manager.tsx";
-import * as $Alert from "./islands/Alert.tsx";
-import * as $Confirmation from "./islands/Confirmation.tsx";
-import * as $ConnectivityTest from "./islands/ConnectivityTest.tsx";
 import * as $CookieNotice from "./islands/CookieNotice.tsx";
-import * as $CreationDate from "./islands/CreationDate.tsx";
-import * as $FileIdAnalyzer from "./islands/FileIdAnalyzer.tsx";
-import * as $FilterQueryBrowser from "./islands/FilterQueryBrowser.tsx";
-import * as $InlineMessageIdUnpacker from "./islands/InlineMessageIdUnpacker.tsx";
-import * as $Modal from "./islands/Modal.tsx";
 import * as $RichMessageEditor from "./islands/RichMessageEditor.tsx";
-import * as $SessionStringAnalyzer from "./islands/SessionStringAnalyzer.tsx";
-import * as $SessionStringConverter from "./islands/SessionStringConverter.tsx";
-import * as $SessionStringGenerator from "./islands/SessionStringGenerator.tsx";
-import * as $UpdateExplorer from "./islands/UpdateExplorer.tsx";
-import * as $WebhookManager from "./islands/WebhookManager.tsx";
 import { type Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -41,37 +15,11 @@ const manifest = {
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
     "./routes/_middleware.tsx": $_middleware,
-    "./routes/connectivity-test.tsx": $connectivity_test,
-    "./routes/creation-date.tsx": $creation_date,
-    "./routes/disclaimer.tsx": $disclaimer,
-    "./routes/file-id-analyzer.tsx": $file_id_analyzer,
-    "./routes/filter-query-browser.tsx": $filter_query_browser,
     "./routes/index.tsx": $index,
-    "./routes/inline-message-id-unpacker.tsx": $inline_message_id_unpacker,
-    "./routes/rich-message-preview.tsx": $rich_message_preview,
-    "./routes/session-string-analyzer.tsx": $session_string_analyzer,
-    "./routes/session-string-converter.tsx": $session_string_converter,
-    "./routes/session-string-generator.tsx": $session_string_generator,
-    "./routes/test.tsx": $test,
-    "./routes/update-explorer.tsx": $update_explorer,
-    "./routes/webhook-manager.tsx": $webhook_manager,
   },
   islands: {
-    "./islands/Alert.tsx": $Alert,
-    "./islands/Confirmation.tsx": $Confirmation,
-    "./islands/ConnectivityTest.tsx": $ConnectivityTest,
     "./islands/CookieNotice.tsx": $CookieNotice,
-    "./islands/CreationDate.tsx": $CreationDate,
-    "./islands/FileIdAnalyzer.tsx": $FileIdAnalyzer,
-    "./islands/FilterQueryBrowser.tsx": $FilterQueryBrowser,
-    "./islands/InlineMessageIdUnpacker.tsx": $InlineMessageIdUnpacker,
-    "./islands/Modal.tsx": $Modal,
     "./islands/RichMessageEditor.tsx": $RichMessageEditor,
-    "./islands/SessionStringAnalyzer.tsx": $SessionStringAnalyzer,
-    "./islands/SessionStringConverter.tsx": $SessionStringConverter,
-    "./islands/SessionStringGenerator.tsx": $SessionStringGenerator,
-    "./islands/UpdateExplorer.tsx": $UpdateExplorer,
-    "./islands/WebhookManager.tsx": $WebhookManager,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;
