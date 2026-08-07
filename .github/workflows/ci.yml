@@ -29,8 +29,10 @@ jobs:
       - name: Lint
         run: deno lint
 
+      # `deno check .` walks the project honoring deno.json excludes;
+      # `**/*.ts` globs don't recurse in CI's bash (globstar is off).
       - name: Type check
-        run: deno check **/*.ts && deno check **/*.tsx
+        run: deno check .
 
       - name: Renderer TypeScript tests
         run: deno test --allow-read renderer/tests/

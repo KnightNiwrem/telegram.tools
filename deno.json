@@ -1,7 +1,7 @@
 {
   "lock": false,
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
+    "check": "deno fmt --check && deno lint && deno check .",
     "cli": "echo \"import '\\$fresh/src/dev/cli.ts'\" | deno run --unstable -A -",
     "manifest": "deno task cli manifest $(pwd)",
     "start": "deno run -A --watch=static/,routes/ dev.ts",
@@ -17,11 +17,15 @@
   "exclude": [
     "**/_fresh/*",
     "static/",
+    "renderer/build/",
+    "renderer/dist/",
     "renderer/upstream/",
     "renderer/patches/",
     "renderer/schema/",
     "renderer/tests/native-goldens/",
     "renderer/tests/integration/",
+    "renderer/tests/wasm-output/",
+    "renderer/tests/diffs/",
     "telegram-rich-message-wasm-implementation-plan.md"
   ],
   "imports": {
