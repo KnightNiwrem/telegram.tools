@@ -26,7 +26,7 @@ js/adapter-html/     HTML/Markdown input interface + fidelity-mode labels
 js/sdk/              public SDK: WASM loader, C-ABI binding, scheduling,
                      canvas host
 tests/fixtures/      Phase 1 fixture corpus (76 fixtures)
-tests/               deno tests (93 passing): fixtures, flattener, limits
+tests/               deno tests (95 passing): fixtures, flattener, limits
 scripts/             build-native / build-wasm / capture-goldens /
                      compare-renders
 ```
