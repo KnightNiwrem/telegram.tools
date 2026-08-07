@@ -1,0 +1,11 @@
+{
+  "id": "html-render-single-paragraph",
+  "description": "HTML import rendering: a single plain paragraph. TDesktop's BlocksFromHtml deliberately rejects this shape (clipboard callers insert it inline); the renderer mirrors that fallback and renders one paragraph of inline rich text.",
+  "input": {
+    "html": "<p>A single paragraph with <b>bold</b> and a <a href=\"https://telegram.org\">link</a>.</p>"
+  },
+  "expected": {
+    "mode": "html",
+    "diagnostics": []
+  }
+}

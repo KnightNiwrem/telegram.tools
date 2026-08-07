@@ -2,7 +2,8 @@
 # Part of the telegram.tools rich-message renderer (GPL-3.0, see
 # renderer/LICENSE).
 #
-# Renders every blocks-mode fixture through the native host at the canonical
+# Renders every renderable fixture (blocks mode, and html mode through
+# TDesktop's import path) through the native host at the canonical
 # profile widths and stores PNG + metadata under tests/native-goldens/
 # (plan Phase 1). Requires a built ttr_native_host and deno.
 set -euo pipefail
@@ -22,22 +23,17 @@ for fixture in "${renderer_dir}"/tests/fixtures/*.json; do
     id="$(basename "${fixture}" .json)"
     for width in "${widths[@]}"; do
         request="$(mktemp)"
-        # Build a RenderRequest from the fixture's expected canonical form.
+        # Build a RenderRequest from the fixture (shared mapping in
+        # scripts/lib/fixture-request.ts).
         deno eval '
-            const [fixturePath, width] = Deno.args;
+            const [libUrl, fixturePath, width] = Deno.args;
+            const { goldenRequestFor } = await import(libUrl);
             const fixture = JSON.parse(Deno.readTextFileSync(fixturePath));
-            if (fixture.expected?.mode !== "blocks") Deno.exit(3);
-            console.log(JSON.stringify({
-              schemaVersion: 1,
-              content: {
-                mode: "blocks",
-                richMessage: fixture.expected.canonical,
-              },
-              viewportWidth: Number(width),
-              theme: "light",
-              scale: 1,
-            }));
-        ' "${fixture}" "${width}" > "${request}" 2>/dev/null || {
+            const request = goldenRequestFor(fixture, Number(width));
+            if (request === null) Deno.exit(3);
+            console.log(JSON.stringify(request));
+        ' "file://${renderer_dir}/scripts/lib/fixture-request.ts" \
+            "${fixture}" "${width}" > "${request}" 2>/dev/null || {
             rm -f "${request}"
             continue
         }

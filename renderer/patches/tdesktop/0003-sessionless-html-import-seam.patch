@@ -1,0 +1,112 @@
+diff --git a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
+index 41a30ae..1dc9c07 100644
+--- a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
++++ b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.cpp
+@@ -239,7 +239,7 @@ constexpr auto kMaxCellLength = 4096;
+ }
+ 
+ [[nodiscard]] bool FillImportedMedia(
+-		not_null<Main::Session*> session,
++		Main::Session *session,
+ 		RichPage::Block &result,
+ 		const TextUtilities::HtmlMedia &media,
+ 		TextUtilities::HtmlBlockKind kind) {
+@@ -252,7 +252,7 @@ constexpr auto kMaxCellLength = 4096;
+ 	if (kind == Source::Photo) {
+ 		result.kind = RichPage::BlockKind::Photo;
+ 		const auto id = MediaIdFromIdentity(media.identity, u"photo"_q);
+-		if (const auto photo = UsablePhoto(session, id)) {
++		if (const auto photo = session ? UsablePhoto(session, id) : nullptr) {
+ 			result.photoId = id;
+ 			result.photo = photo;
+ 			return true;
+@@ -265,7 +265,9 @@ constexpr auto kMaxCellLength = 4096;
+ 	const auto id = MediaIdFromIdentity(
+ 		media.identity,
+ 		((kind == Source::Audio) ? u"audio"_q : u"video"_q));
+-	if (const auto document = UsableDocument(session, id)) {
++	if (const auto document = session
++			? UsableDocument(session, id)
++			: nullptr) {
+ 		result.documentId = id;
+ 		result.document = document;
+ 		return true;
+@@ -277,6 +279,7 @@ struct ImportContext {
+ 	Main::Session *session = nullptr;
+ 	QString basePath;
+ 	QStringList localMediaPaths;
++	int droppedMedia = 0;
+ };
+ 
+ [[nodiscard]] std::vector<RichPage::Block> ConvertImportedBlocks(
+@@ -381,6 +384,7 @@ struct ImportContext {
+ 				block.media.source,
+ 				context.basePath);
+ 			if (local.isEmpty()) {
++				++context.droppedMedia;
+ 				return RichPage::Block();
+ 			}
+ 			const auto placeholder = ImportedMediaPlaceholderId(
+@@ -411,6 +415,7 @@ struct ImportContext {
+ 					child.media.source,
+ 					context.basePath);
+ 				if (local.isEmpty()) {
++					++context.droppedMedia;
+ 					continue;
+ 				}
+ 				const auto placeholder = ImportedMediaPlaceholderId(
+@@ -641,8 +646,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+ 		: QString();
+ }
+ 
+-[[nodiscard]] std::optional<BlocksImportResult> BlocksFromHtmlSource(
+-		not_null<Main::Session*> session,
++} // namespace
++
++std::optional<BlocksImportResult> BlocksFromHtmlSource(
++		Main::Session *session,
+ 		const QString &html,
+ 		const QString &basePath,
+ 		const RichMessageLimits &limits,
+@@ -665,11 +672,10 @@ std::vector<RichPage::Block> ConvertImportedBlocks(
+ 		.blocks = std::move(blocks),
+ 		.localMediaPaths = std::move(context.localMediaPaths),
+ 		.truncated = parsed->truncated,
++		.droppedMedia = context.droppedMedia,
+ 	};
+ }
+ 
+-} // namespace
+-
+ TableImportLimits TableImportLimitsFor(
+ 		const RichMessageLimits &limits,
+ 		int usedBlocks) {
+diff --git a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
+index 9002e9f..73d778c 100644
+--- a/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
++++ b/Telegram/SourceFiles/iv/editor/iv_editor_clipboard_import.h
+@@ -51,6 +51,7 @@ struct BlocksImportResult {
+ 	std::vector<RichPage::Block> blocks;
+ 	QStringList localMediaPaths;
+ 	bool truncated = false;
++	int droppedMedia = 0;
+ };
+ 
+ [[nodiscard]] TableImportLimits TableImportLimitsFor(
+@@ -69,6 +70,16 @@ struct BlocksImportResult {
+ 	const RichMessageLimits &limits,
+ 	int usedBlocks);
+ 
++// The session may be null: remote photo/document identities then resolve
++// to nothing and media falls back to basePath-local paths or is dropped
++// (counted in BlocksImportResult::droppedMedia).
++[[nodiscard]] std::optional<BlocksImportResult> BlocksFromHtmlSource(
++	Main::Session *session,
++	const QString &html,
++	const QString &basePath,
++	const RichMessageLimits &limits,
++	int usedBlocks);
++
+ [[nodiscard]] bool MimeDataLooksLikeExportedHtml(
+ 	not_null<const QMimeData*> data);
+ 

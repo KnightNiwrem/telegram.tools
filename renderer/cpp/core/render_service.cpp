@@ -11,6 +11,8 @@ integration replaced by the sessionless context (plan Phase 2).
 #include "core/harness_app.h"
 #include "core/version.h"
 
+#include "iv/editor/iv_editor_clipboard_import.h"
+#include "iv/editor/iv_editor_text_entities.h"
 #include "iv/iv_rich_page.h"
 #include "iv/markdown/iv_markdown_article.h"
 #include "iv/markdown/iv_markdown_media_block.h"
@@ -19,6 +21,7 @@ integration replaced by the sessionless context (plan Phase 2).
 #include "ui/chat/chat_theme.h"
 #include "ui/painter.h"
 #include "ui/style/style_core_palette.h"
+#include "ui/text/text_html_tags.h"
 
 #include "styles/style_chat.h"
 #include "styles/style_iv.h"
@@ -104,15 +107,14 @@ public:
 
 		const auto content = request.value(u"content"_q).toObject();
 		const auto mode = content.value(u"mode"_q).toString();
-		if (mode != u"blocks"_q) {
-			// HTML/Markdown import (plan Phase 7) enters below
-			// BlocksFromHtmlSource once the sessionless seam inside
-			// TextUtilities::BlocksFromHtml is established; until then the
-			// renderer reports the mode as unsupported instead of guessing.
+		if (mode != u"blocks"_q && mode != u"html"_q) {
+			// TDesktop v7.0.9 has no markdown parsing path (Iv::Markdown
+			// is the renderer namespace, not a parser); a documented
+			// parser choice is tracked in renderer/BUILD-STATUS.md.
 			return fail(
 				u"renderer.mode-unsupported"_q,
-				u"only canonical blocks input is implemented; HTML/Markdown "
-				"import is tracked in renderer/BUILD-STATUS.md"_q);
+				u"blocks and html input are implemented; markdown import "
+				"is tracked in renderer/BUILD-STATUS.md"_q);
 		}
 		const auto viewportWidth = request.value(u"viewportWidth"_q).toInt();
 		if (viewportWidth <= 0 || viewportWidth > 4096) {
@@ -145,27 +147,98 @@ public:
 			}));
 		}
 
-		auto parsed = ParseCanonicalRichMessage(
-			content.value(u"richMessage"_q).toObject());
-		for (const auto &diagnostic : parsed.diagnostics) {
-			diagnostics.append(DiagnosticToJson(diagnostic));
-		}
-		if (!parsed.ok()) {
-			output.metadata = failureMetadata(diagnostics);
-			return output;
-		}
-
-		// Limits are enforced by the TypeScript validator before the request
-		// crosses the boundary and re-checked structurally by the canonical
-		// parser above; Iv::ValidateRichMessage lives in the app-bound
-		// iv_rich_page.cpp translation unit and is deliberately not linked.
+		// For blocks mode, limits are enforced by the TypeScript validator
+		// before the request crosses the boundary and re-checked
+		// structurally by the canonical parser below; for html mode they
+		// bound the import itself. Iv::ValidateRichMessage lives in the
+		// app-bound iv_rich_page.cpp translation unit and is deliberately
+		// not linked.
 		const auto limits = SessionlessLimits();
+
+		auto page = std::shared_ptr<Iv::RichPage>();
+		auto media = std::vector<MediaIdBinding>();
+		if (mode == u"blocks"_q) {
+			auto parsed = ParseCanonicalRichMessage(
+				content.value(u"richMessage"_q).toObject());
+			for (const auto &diagnostic : parsed.diagnostics) {
+				diagnostics.append(DiagnosticToJson(diagnostic));
+			}
+			if (!parsed.ok()) {
+				output.metadata = failureMetadata(diagnostics);
+				return output;
+			}
+			page = std::move(parsed.page);
+			media = std::move(parsed.media);
+		} else {
+			// TDesktop's own import path (patch 0003 exposes it with a
+			// null session): remote media identities resolve to nothing
+			// sessionless and local paths do not exist in this host, so
+			// media is dropped and reported instead of guessed at.
+			const auto source = content.value(u"source"_q).toString();
+			auto imported = Iv::Editor::BlocksFromHtmlSource(
+				nullptr,
+				source,
+				QString(),
+				limits,
+				0);
+			if (!imported) {
+				// BlocksFromHtml deliberately rejects a single plain
+				// paragraph so TDesktop's clipboard callers insert it as
+				// inline rich text instead of a block import; mirror that
+				// fallback so one-paragraph sources still render.
+				// TextWithTagsFromHtml returns nullopt when no formatting
+				// survives — the paste path then uses the plain text,
+				// which for an HTML source is the tag-stripped fragment.
+				auto inlineText = TextUtilities::TextWithTagsFromHtml(
+					source,
+					true);
+				if (!inlineText) {
+					inlineText = TextUtilities::TextWithTagsFromHtmlFragment(
+						source);
+				}
+				if (inlineText->text.trimmed().isEmpty()) {
+					return fail(
+						u"renderer.html-import"_q,
+						u"no supported rich content found in the HTML "
+						"source"_q);
+				}
+				auto paragraph = Iv::RichPage::Block();
+				paragraph.kind = Iv::RichPage::BlockKind::Paragraph;
+				paragraph.text.text = Iv::Editor::ConvertEditorTagsToRichText(
+					std::move(*inlineText));
+				imported = Iv::Editor::BlocksImportResult();
+				imported->blocks.push_back(std::move(paragraph));
+			}
+			if (imported->truncated) {
+				diagnostics.append(DiagnosticToJson({
+					Diagnostic::Severity::Warning,
+					u"renderer.html-truncated"_q,
+					u"HTML import hit the rich-message limits; "
+					"content was truncated"_q,
+					QString(),
+				}));
+			}
+			const auto dropped = imported->droppedMedia
+				+ int(imported->localMediaPaths.size());
+			if (dropped > 0) {
+				diagnostics.append(DiagnosticToJson({
+					Diagnostic::Severity::Warning,
+					u"renderer.html-media-dropped"_q,
+					QString::number(dropped)
+						+ u" media item(s) dropped; media in HTML "
+						"sources is not supported yet"_q,
+					QString(),
+				}));
+			}
+			page = std::make_shared<Iv::RichPage>();
+			page->blocks = std::move(imported->blocks);
+		}
 
 		auto mediaRuntime = std::make_shared<SessionlessMediaRuntime>(
 			_mediaStore,
-			std::move(parsed.media));
+			std::move(media));
 		auto prepared = Iv::Markdown::TryPrepareNativeInstantView({
-			.richPage = parsed.page,
+			.richPage = page,
 			.mediaRuntime = mediaRuntime,
 			.dimensionsOverride
 				= Iv::Markdown::CaptureMarkdownPrepareDimensions(

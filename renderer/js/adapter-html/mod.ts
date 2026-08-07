@@ -31,6 +31,11 @@ export const FIDELITY_MODE_LABELS: Record<FidelityMode, string> = {
 };
 
 export interface HtmlInputOptions {
+  /** Mirrors grammY's `skip_entity_detection` (a server-side flag). The
+   * local TDesktop import applies explicit markup only and performs no
+   * automatic entity detection in either state, so this does not change
+   * the preview; it is carried for API parity and the opt-in
+   * server-verified mode. */
   skipEntityDetection?: boolean;
 }
 

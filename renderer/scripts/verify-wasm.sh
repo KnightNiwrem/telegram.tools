@@ -2,7 +2,8 @@
 # Part of the telegram.tools rich-message renderer (GPL-3.0, see
 # renderer/LICENSE).
 #
-# Plan Phase 3 verification: renders every blocks-mode fixture through the
+# Plan Phase 3 verification: renders every renderable fixture (blocks
+# mode, and html mode through TDesktop's import path) through the
 # WASM artifact in a headless browser and compares dimensions and pixel
 # checksums against the committed native goldens. Any mismatch fails.
 #
@@ -50,27 +51,21 @@ cp "${artifact_dir}/ttr-renderer.js" "${artifact_dir}/ttr-renderer.wasm" \
 
 # Build the request list from the fixtures, mirroring capture-goldens.sh.
 deno eval '
-    const [fixturesDir, widths] = Deno.args;
+    const [libUrl, fixturesDir, widths] = Deno.args;
+    const { goldenRequestFor } = await import(libUrl);
     const requests = [];
     for (const entry of [...Deno.readDirSync(fixturesDir)].sort((a, b) => a.name < b.name ? -1 : 1)) {
       if (!entry.name.endsWith(".json")) continue;
       const fixture = JSON.parse(Deno.readTextFileSync(`${fixturesDir}/${entry.name}`));
-      if (fixture.expected?.mode !== "blocks") continue;
       for (const width of widths.split(",")) {
-        requests.push({
-          id: `${fixture.id}.w${width}.light`,
-          request: {
-            schemaVersion: 1,
-            content: { mode: "blocks", richMessage: fixture.expected.canonical },
-            viewportWidth: Number(width),
-            theme: "light",
-            scale: 1,
-          },
-        });
+        const request = goldenRequestFor(fixture, Number(width));
+        if (request === null) continue;
+        requests.push({ id: `${fixture.id}.w${width}.light`, request });
       }
     }
     console.log(JSON.stringify(requests));
-' "${renderer_dir}/tests/fixtures" "$(IFS=,; echo "${widths[*]}")" \
+' "file://${renderer_dir}/scripts/lib/fixture-request.ts" \
+    "${renderer_dir}/tests/fixtures" "$(IFS=,; echo "${widths[*]}")" \
     > "${work}/requests.json"
 
 python3 -m http.server "${port}" --directory "${work}" >/dev/null 2>&1 &

@@ -3,7 +3,8 @@
 # renderer/LICENSE).
 #
 # Native render regression gate (plan §8 layer 3): re-renders every
-# blocks-mode fixture and compares pixels + geometry against the committed
+# renderable fixture (blocks mode, and html mode through TDesktop's
+# import path) and compares pixels + geometry against the committed
 # goldens in tests/native-goldens. Any difference fails; diffs are written
 # to tests/diffs/ for review. Run in the same environment that captured
 # the goldens (see BUILD-STATUS.md for the dev profile).
@@ -29,19 +30,22 @@ for golden in "${goldens}"/*.png; do
     id="${name%%.w*}"
     width="${name#*.w}"; width="${width%%.*}"
     request="${work}/${name}.request.json"
-    deno eval '
-        const [fixturePath, width] = Deno.args;
+    # A committed golden must be reproducible: a fixture that can no
+    # longer produce a request is a failure, not a silent skip.
+    if ! deno eval '
+        const [libUrl, fixturePath, width] = Deno.args;
+        const { goldenRequestFor } = await import(libUrl);
         const fixture = JSON.parse(Deno.readTextFileSync(fixturePath));
-        if (fixture.expected?.mode !== "blocks") Deno.exit(3);
-        console.log(JSON.stringify({
-          schemaVersion: 1,
-          content: { mode: "blocks", richMessage: fixture.expected.canonical },
-          viewportWidth: Number(width),
-          theme: "light",
-          scale: 1,
-        }));
-    ' "${renderer_dir}/tests/fixtures/${id}.json" "${width}" \
-        > "${request}" 2>/dev/null || continue
+        const request = goldenRequestFor(fixture, Number(width));
+        if (request === null) Deno.exit(3);
+        console.log(JSON.stringify(request));
+    ' "file://${renderer_dir}/scripts/lib/fixture-request.ts" \
+        "${renderer_dir}/tests/fixtures/${id}.json" "${width}" \
+        > "${request}" 2>/dev/null; then
+        echo "NO REQUEST FOR GOLDEN: ${name}"
+        failures=$((failures + 1))
+        continue
+    fi
     candidate="${work}/${name}.png"
     if ! "${host}" --request "${request}" --out "${candidate}" 2>/dev/null; then
         echo "RENDER FAILED: ${name}"

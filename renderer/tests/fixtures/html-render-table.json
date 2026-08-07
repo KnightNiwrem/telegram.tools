@@ -1,0 +1,11 @@
+{
+  "id": "html-render-table",
+  "description": "HTML import rendering: table with caption, header row, and a column span.",
+  "input": {
+    "html": "<table><caption>Quarterly numbers</caption><tr><th>Region</th><th>Q1</th><th>Q2</th></tr><tr><td>North</td><td>10</td><td>14</td></tr><tr><td>South</td><td colspan=\"2\">no data</td></tr></table>"
+  },
+  "expected": {
+    "mode": "html",
+    "diagnostics": []
+  }
+}
