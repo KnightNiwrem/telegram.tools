@@ -23,25 +23,17 @@ for fixture in "${renderer_dir}"/tests/fixtures/*.json; do
     id="$(basename "${fixture}" .json)"
     for width in "${widths[@]}"; do
         request="$(mktemp)"
-        # Build a RenderRequest from the fixture's expected canonical form.
+        # Build a RenderRequest from the fixture (shared mapping in
+        # scripts/lib/fixture-request.ts).
         deno eval '
-            const [fixturePath, width] = Deno.args;
+            const [libUrl, fixturePath, width] = Deno.args;
+            const { goldenRequestFor } = await import(libUrl);
             const fixture = JSON.parse(Deno.readTextFileSync(fixturePath));
-            const mode = fixture.expected?.mode;
-            const content = (mode === "blocks")
-              ? { mode, richMessage: fixture.expected.canonical }
-              : (mode === "html" && typeof fixture.input?.html === "string")
-              ? { mode, source: fixture.input.html }
-              : null;
-            if (content === null) Deno.exit(3);
-            console.log(JSON.stringify({
-              schemaVersion: 1,
-              content,
-              viewportWidth: Number(width),
-              theme: "light",
-              scale: 1,
-            }));
-        ' "${fixture}" "${width}" > "${request}" 2>/dev/null || {
+            const request = goldenRequestFor(fixture, Number(width));
+            if (request === null) Deno.exit(3);
+            console.log(JSON.stringify(request));
+        ' "file://${renderer_dir}/scripts/lib/fixture-request.ts" \
+            "${fixture}" "${width}" > "${request}" 2>/dev/null || {
             rm -f "${request}"
             continue
         }

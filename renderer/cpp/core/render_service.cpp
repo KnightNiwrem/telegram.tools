@@ -12,6 +12,7 @@ integration replaced by the sessionless context (plan Phase 2).
 #include "core/version.h"
 
 #include "iv/editor/iv_editor_clipboard_import.h"
+#include "iv/editor/iv_editor_text_entities.h"
 #include "iv/iv_rich_page.h"
 #include "iv/markdown/iv_markdown_article.h"
 #include "iv/markdown/iv_markdown_media_block.h"
@@ -20,6 +21,7 @@ integration replaced by the sessionless context (plan Phase 2).
 #include "ui/chat/chat_theme.h"
 #include "ui/painter.h"
 #include "ui/style/style_core_palette.h"
+#include "ui/text/text_html_tags.h"
 
 #include "styles/style_chat.h"
 #include "styles/style_iv.h"
@@ -172,16 +174,40 @@ public:
 			// null session): remote media identities resolve to nothing
 			// sessionless and local paths do not exist in this host, so
 			// media is dropped and reported instead of guessed at.
+			const auto source = content.value(u"source"_q).toString();
 			auto imported = Iv::Editor::BlocksFromHtmlSource(
 				nullptr,
-				content.value(u"source"_q).toString(),
+				source,
 				QString(),
 				limits,
 				0);
 			if (!imported) {
-				return fail(
-					u"renderer.html-import"_q,
-					u"no supported rich content found in the HTML source"_q);
+				// BlocksFromHtml deliberately rejects a single plain
+				// paragraph so TDesktop's clipboard callers insert it as
+				// inline rich text instead of a block import; mirror that
+				// fallback so one-paragraph sources still render.
+				// TextWithTagsFromHtml returns nullopt when no formatting
+				// survives — the paste path then uses the plain text,
+				// which for an HTML source is the tag-stripped fragment.
+				auto inlineText = TextUtilities::TextWithTagsFromHtml(
+					source,
+					true);
+				if (!inlineText) {
+					inlineText = TextUtilities::TextWithTagsFromHtmlFragment(
+						source);
+				}
+				if (inlineText->text.trimmed().isEmpty()) {
+					return fail(
+						u"renderer.html-import"_q,
+						u"no supported rich content found in the HTML "
+						"source"_q);
+				}
+				auto paragraph = Iv::RichPage::Block();
+				paragraph.kind = Iv::RichPage::BlockKind::Paragraph;
+				paragraph.text.text = Iv::Editor::ConvertEditorTagsToRichText(
+					std::move(*inlineText));
+				imported = Iv::Editor::BlocksImportResult();
+				imported->blocks.push_back(std::move(paragraph));
 			}
 			if (imported->truncated) {
 				diagnostics.append(DiagnosticToJson({

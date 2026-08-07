@@ -51,33 +51,21 @@ cp "${artifact_dir}/ttr-renderer.js" "${artifact_dir}/ttr-renderer.wasm" \
 
 # Build the request list from the fixtures, mirroring capture-goldens.sh.
 deno eval '
-    const [fixturesDir, widths] = Deno.args;
+    const [libUrl, fixturesDir, widths] = Deno.args;
+    const { goldenRequestFor } = await import(libUrl);
     const requests = [];
     for (const entry of [...Deno.readDirSync(fixturesDir)].sort((a, b) => a.name < b.name ? -1 : 1)) {
       if (!entry.name.endsWith(".json")) continue;
       const fixture = JSON.parse(Deno.readTextFileSync(`${fixturesDir}/${entry.name}`));
-      const mode = fixture.expected?.mode;
-      const content = (mode === "blocks")
-        ? { mode, richMessage: fixture.expected.canonical }
-        : (mode === "html" && typeof fixture.input?.html === "string")
-        ? { mode, source: fixture.input.html }
-        : null;
-      if (content === null) continue;
       for (const width of widths.split(",")) {
-        requests.push({
-          id: `${fixture.id}.w${width}.light`,
-          request: {
-            schemaVersion: 1,
-            content,
-            viewportWidth: Number(width),
-            theme: "light",
-            scale: 1,
-          },
-        });
+        const request = goldenRequestFor(fixture, Number(width));
+        if (request === null) continue;
+        requests.push({ id: `${fixture.id}.w${width}.light`, request });
       }
     }
     console.log(JSON.stringify(requests));
-' "${renderer_dir}/tests/fixtures" "$(IFS=,; echo "${widths[*]}")" \
+' "file://${renderer_dir}/scripts/lib/fixture-request.ts" \
+    "${renderer_dir}/tests/fixtures" "$(IFS=,; echo "${widths[*]}")" \
     > "${work}/requests.json"
 
 python3 -m http.server "${port}" --directory "${work}" >/dev/null 2>&1 &
