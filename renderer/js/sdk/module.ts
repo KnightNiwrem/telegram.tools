@@ -115,6 +115,13 @@ export interface LoadModuleOptions {
    * its own opaque fetch.
    */
   onProgress?: (progress: LoadProgress) => void;
+  /**
+   * Known raw (decompressed) size of the .wasm asset, e.g. from the
+   * artifact lock. Used as the download progress total when the response
+   * is served compressed — Content-Length then counts transfer bytes and
+   * cannot be compared against the decoded bytes the stream yields.
+   */
+  expectedWasmBytes?: number;
 }
 
 /** The single sidecar asset the Emscripten glue asks locateFile for. */
@@ -140,7 +147,7 @@ async function fetchWasmWithProgress(
   const totalBytes = !encoded && Number.isFinite(contentLength) &&
       contentLength > 0
     ? contentLength
-    : null;
+    : options.expectedWasmBytes ?? null;
   const chunks: Uint8Array[] = [];
   let loadedBytes = 0;
   const reader = response.body.getReader();

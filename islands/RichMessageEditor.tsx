@@ -79,7 +79,18 @@ function severityColor(severity: RenderDiagnostic["severity"]): string {
   }
 }
 
-export function RichMessageEditor() {
+export interface RichMessageEditorProps {
+  /** Cache-busting version for renderer asset URLs (the artifact lock
+   * tag) — the assets are served immutable under versioned URLs. */
+  assetVersion?: string;
+  /** Raw .wasm size from the artifact lock; download progress total when
+   * the server compresses the response (no usable Content-Length). */
+  wasmBytes?: number;
+}
+
+export function RichMessageEditor(
+  { assetVersion, wasmBytes }: RichMessageEditorProps,
+) {
   const mode = useSignal<InputMode>("blocks");
   const source = useSignal(EXAMPLE_BLOCKS);
   const width = useSignal(480);
@@ -105,9 +116,13 @@ export function RichMessageEditor() {
   );
 
   useEffect(() => {
+    const version = assetVersion
+      ? `?v=${encodeURIComponent(assetVersion)}`
+      : "";
     RichMessageRenderer.load({
-      glueUrl: RENDERER_GLUE_URL,
-      locateFile: (path) => `/rich-message-renderer/${path}`,
+      glueUrl: `${RENDERER_GLUE_URL}${version}`,
+      locateFile: (path) => `/rich-message-renderer/${path}${version}`,
+      expectedWasmBytes: wasmBytes,
       onProgress: (progress) => loadProgress.value = progress,
     })
       .then((loaded) => {

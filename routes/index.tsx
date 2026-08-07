@@ -1,3 +1,4 @@
+import lock from "../renderer/artifact.lock.json" with { type: "json" };
 import { RichMessageEditor } from "../islands/RichMessageEditor.tsx";
 
 export default () => (
@@ -10,6 +11,9 @@ export default () => (
         ← telegram.tools
       </a>
     </header>
-    <RichMessageEditor />
+    <RichMessageEditor
+      assetVersion={lock.tag}
+      wasmBytes={lock.files["ttr-renderer.wasm"].bytes}
+    />
   </>
 );

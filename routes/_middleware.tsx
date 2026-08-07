@@ -13,6 +13,17 @@ export async function handler(req: Request, ctx: FreshContext) {
   }
   try {
     const res = await ctx.next();
+    // Renderer assets requested under a versioned URL (?v=<lock tag>)
+    // only change when the version does, so they can be cached forever.
+    if (
+      url.pathname.startsWith("/rich-message-renderer/") &&
+      url.searchParams.has("v") &&
+      res.status == 200
+    ) {
+      const headers = new Headers(res.headers);
+      headers.set("cache-control", "public, max-age=31536000, immutable");
+      return new Response(res.body, { status: res.status, headers });
+    }
     if (
       res.body != null &&
       res.status == 200 &&
