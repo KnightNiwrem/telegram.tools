@@ -1,0 +1,11 @@
+{
+  "id": "html-render-media-placeholder",
+  "description": "HTML import rendering: TDesktop own-media markup binds a sessionless placeholder id to its src string (renderer.html-media-placeholder info diagnostic, ref reported in metadata mediaRefs); the block renders the authentic unloaded-media placeholder between the paragraphs. Bytes registered under the src ref would render for real; the renderer never fetches.",
+  "input": {
+    "html": "<p>Before the photo.</p><img data-tg-src=\"tg://photo?id=42\" src=\"https://example.com/photo.jpg\" width=\"640\" height=\"360\"><p>After the photo.</p>"
+  },
+  "expected": {
+    "mode": "html",
+    "diagnostics": []
+  }
+}

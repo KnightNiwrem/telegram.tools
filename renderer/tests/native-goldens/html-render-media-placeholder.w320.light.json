@@ -1,0 +1,32 @@
+{
+    "diagnostics": [
+        {
+            "code": "renderer.html-media-placeholder",
+            "message": "1 media source(s) unresolved; photo and video blocks render placeholders until bytes are registered for their src (other media kinds do not render sessionless yet)",
+            "severity": "info"
+        }
+    ],
+    "geometry": [
+        {
+            "height": 180,
+            "kind": "media",
+            "width": 320,
+            "x": 0,
+            "y": 23
+        }
+    ],
+    "height": 222,
+    "hitTargets": [
+    ],
+    "mediaRefs": [
+        {
+            "ref": "https://example.com/photo.jpg",
+            "resolved": false
+        }
+    ],
+    "rendererVersion": "0.1.0-dev",
+    "scale": 1,
+    "status": "ok",
+    "tdesktopRevision": "v7.0.9/a1e89e1f64f08cb058caf1c61ff43f319f98a6ec",
+    "width": 320
+}

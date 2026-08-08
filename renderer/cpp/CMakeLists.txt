@@ -22,6 +22,8 @@ target_sources(ttr_core PRIVATE
     ${ttr_dir}/core/link_stubs.cpp
     ${ttr_dir}/core/render_service.cpp
     ${ttr_dir}/core/render_service.h
+    ${ttr_dir}/core/sessionless_media_blocks.cpp
+    ${ttr_dir}/core/sessionless_media_blocks.h
     ${ttr_dir}/core/sessionless_media_runtime.cpp
     ${ttr_dir}/core/sessionless_media_runtime.h
     ${ttr_dir}/core/version.h

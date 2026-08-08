@@ -35,6 +35,7 @@ interface RawRenderResult {
   diagnostics?: RenderDiagnostic[];
   geometry?: RenderResult["geometry"];
   hitTargets?: RenderResult["hitTargets"];
+  mediaRefs?: RenderResult["mediaRefs"];
   rendererVersion?: string;
   tdesktopRevision?: string;
 }
@@ -198,6 +199,7 @@ export class RichMessageRenderer {
       diagnostics,
       geometry: raw.geometry ?? [],
       hitTargets: raw.hitTargets ?? [],
+      mediaRefs: raw.mediaRefs,
       rendererVersion: raw.rendererVersion ?? this.#versionInfo.rendererVersion,
       tdesktopRevision: raw.tdesktopRevision ??
         this.#versionInfo.tdesktopRevision,

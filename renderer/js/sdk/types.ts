@@ -27,9 +27,11 @@ export type RenderDirection = "auto" | "ltr" | "rtl";
 export type RenderContent =
   | { mode: "blocks"; richMessage: CanonicalRichMessage }
   // html is parsed inside the artifact by TDesktop's own import path
-  // (sessionless: media is dropped with a renderer.html-media-dropped
-  // warning). markdown has no TDesktop parsing path at v7.0.9 and returns
-  // renderer.mode-unsupported until a parser choice is recorded.
+  // (sessionless: recognized media renders as a placeholder bound to its
+  // src string — register bytes under that ref to show content; the
+  // renderer itself never fetches). markdown has no TDesktop parsing path
+  // at v7.0.9 and returns renderer.mode-unsupported until a parser choice
+  // is recorded.
   //
   // skipEntityDetection mirrors grammY's skip_entity_detection, a
   // server-side flag. The local TDesktop import applies explicit markup
@@ -85,6 +87,13 @@ export interface HitTarget {
   data?: string;
 }
 
+/** One distinct media handle a render depends on and whether registered
+ * bytes were found for it (unresolved refs paint placeholders). */
+export interface MediaRefState {
+  ref: string;
+  resolved: boolean;
+}
+
 export interface RenderResult {
   /** Physical pixels (viewportWidth*scale); logical size is width/scale.
    * geometry and hitTargets stay in logical pixels. */
@@ -98,6 +107,9 @@ export interface RenderResult {
   diagnostics: RenderDiagnostic[];
   geometry: BlockGeometry[];
   hitTargets: HitTarget[];
+  /** Media refs this render depends on. Absent from artifacts that predate
+   * media-ref reporting. */
+  mediaRefs?: MediaRefState[];
   rendererVersion: string;
   tdesktopRevision: string;
 }

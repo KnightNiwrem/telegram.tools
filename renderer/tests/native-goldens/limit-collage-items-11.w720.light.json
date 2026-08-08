@@ -6,6 +6,52 @@
     "height": 1,
     "hitTargets": [
     ],
+    "mediaRefs": [
+        {
+            "ref": "m0",
+            "resolved": false
+        },
+        {
+            "ref": "m1",
+            "resolved": false
+        },
+        {
+            "ref": "m2",
+            "resolved": false
+        },
+        {
+            "ref": "m3",
+            "resolved": false
+        },
+        {
+            "ref": "m4",
+            "resolved": false
+        },
+        {
+            "ref": "m5",
+            "resolved": false
+        },
+        {
+            "ref": "m6",
+            "resolved": false
+        },
+        {
+            "ref": "m7",
+            "resolved": false
+        },
+        {
+            "ref": "m8",
+            "resolved": false
+        },
+        {
+            "ref": "m9",
+            "resolved": false
+        },
+        {
+            "ref": "m10",
+            "resolved": false
+        }
+    ],
     "rendererVersion": "0.1.0-dev",
     "scale": 1,
     "status": "ok",

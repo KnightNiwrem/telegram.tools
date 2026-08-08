@@ -28,6 +28,7 @@ integration replaced by the sessionless context (plan Phase 2).
 
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
+#include <QtCore/QSet>
 
 namespace Ttr {
 namespace {
@@ -57,6 +58,56 @@ public:
 	// Defaults in iv_rich_page.h are pinned to the target Bot API revision;
 	// ResolveRichMessageLimits(session) only applies server-side overrides.
 	return Iv::RichMessageLimits();
+}
+
+// The prepare stage drops photo/video blocks without positive dimensions;
+// a registered asset can supply the missing ones. A declared dimension is
+// kept and only its missing counterpart derived from the asset's ratio.
+void BackfillMissingDimensions(int *width, int *height, QSize asset) {
+	if ((*width > 0 && *height > 0) || asset.isEmpty()) {
+		return;
+	} else if (*width > 0) {
+		*height = std::max(
+			qRound(*width * double(asset.height()) / asset.width()),
+			1);
+	} else if (*height > 0) {
+		*width = std::max(
+			qRound(*height * double(asset.width()) / asset.height()),
+			1);
+	} else {
+		*width = asset.width();
+		*height = asset.height();
+	}
+}
+
+void BackfillMediaDimensions(
+		std::vector<Iv::RichPage::Block> &blocks,
+		const SessionlessMediaRuntime &runtime) {
+	using Kind = Iv::RichPage::BlockKind;
+	for (auto &block : blocks) {
+		if (block.kind == Kind::Photo || block.kind == Kind::Video) {
+			BackfillMissingDimensions(
+				&block.width,
+				&block.height,
+				runtime.assetDimensions((block.kind == Kind::Photo)
+					? block.photoId
+					: block.documentId));
+		}
+		for (auto &item : block.mediaItems) {
+			if (item.kind == Kind::Photo || item.kind == Kind::Video) {
+				BackfillMissingDimensions(
+					&item.width,
+					&item.height,
+					runtime.assetDimensions((item.kind == Kind::Photo)
+						? item.photoId
+						: item.documentId));
+			}
+		}
+		BackfillMediaDimensions(block.blocks, runtime);
+		for (auto &item : block.listItems) {
+			BackfillMediaDimensions(item.blocks, runtime);
+		}
+	}
 }
 
 } // namespace
@@ -172,8 +223,11 @@ public:
 		} else {
 			// TDesktop's own import path (patch 0003 exposes it with a
 			// null session): remote media identities resolve to nothing
-			// sessionless and local paths do not exist in this host, so
-			// media is dropped and reported instead of guessed at.
+			// sessionless, so each recognized media block keeps a
+			// placeholder id bound to its src string. Bytes registered
+			// under that ref (registerMedia) render for real; anything
+			// else paints the authentic unloaded-media placeholder. The
+			// renderer never fetches a source itself.
 			const auto source = content.value(u"source"_q).toString();
 			auto imported = Iv::Editor::BlocksFromHtmlSource(
 				nullptr,
@@ -218,6 +272,28 @@ public:
 					QString(),
 				}));
 			}
+			auto unresolved = 0;
+			for (auto &binding : imported->mediaSources) {
+				if (!_mediaStore->lookup(binding.source)) {
+					++unresolved;
+				}
+				media.push_back({
+					.id = binding.id,
+					.ref = std::move(binding.source),
+				});
+			}
+			if (unresolved > 0) {
+				diagnostics.append(DiagnosticToJson({
+					Diagnostic::Severity::Info,
+					u"renderer.html-media-placeholder"_q,
+					QString::number(unresolved)
+						+ u" media source(s) unresolved; photo and video "
+						"blocks render placeholders until bytes are "
+						"registered for their src (other media kinds do "
+						"not render sessionless yet)"_q,
+					QString(),
+				}));
+			}
 			const auto dropped = imported->droppedMedia
 				+ int(imported->localMediaPaths.size());
 			if (dropped > 0) {
@@ -225,8 +301,8 @@ public:
 					Diagnostic::Severity::Warning,
 					u"renderer.html-media-dropped"_q,
 					QString::number(dropped)
-						+ u" media item(s) dropped; media in HTML "
-						"sources is not supported yet"_q,
+						+ u" media item(s) dropped; their sources could "
+						"not be bound sessionless"_q,
 					QString(),
 				}));
 			}
@@ -234,9 +310,33 @@ public:
 			page->blocks = std::move(imported->blocks);
 		}
 
+		// Every media ref this render depends on, with its resolution
+		// state, so the host can offer explicit per-source asset loading
+		// (deduplicated: one entry per distinct ref).
+		auto mediaRefs = QJsonArray();
+		{
+			auto seen = QSet<QString>();
+			for (const auto &binding : media) {
+				if (seen.contains(binding.ref)) {
+					continue;
+				}
+				seen.insert(binding.ref);
+				auto entry = QJsonObject();
+				entry.insert(u"ref"_q, binding.ref);
+				entry.insert(
+					u"resolved"_q,
+					_mediaStore->lookup(binding.ref) != nullptr);
+				mediaRefs.append(entry);
+			}
+		}
+
 		auto mediaRuntime = std::make_shared<SessionlessMediaRuntime>(
 			_mediaStore,
 			std::move(media));
+		BackfillMediaDimensions(page->blocks, *mediaRuntime);
+		// Media blocks sample their static assets at this density; layout
+		// stays logical (the canonical golden profile keeps scale 1).
+		_article.setMediaPixelScale(scale);
 		auto prepared = Iv::Markdown::TryPrepareNativeInstantView({
 			.richPage = page,
 			.mediaRuntime = mediaRuntime,
@@ -344,6 +444,7 @@ public:
 		metadata.insert(u"scale"_q, scale);
 		metadata.insert(u"diagnostics"_q, diagnostics);
 		metadata.insert(u"geometry"_q, geometry);
+		metadata.insert(u"mediaRefs"_q, mediaRefs);
 		metadata.insert(u"hitTargets"_q, QJsonArray());
 		metadata.insert(u"rendererVersion"_q, QString::fromLatin1(
 			kRendererVersion));
