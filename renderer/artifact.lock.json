@@ -1,14 +1,14 @@
 {
   "repo": "KnightNiwrem/telegram.tools",
-  "tag": "renderer-wasm-4548c07",
+  "tag": "renderer-wasm-0f32001",
   "files": {
     "ttr-renderer.js": {
       "sha256": "c5d90b8927a5b603673bf62d9358424f5b8757e69b474f7e5b16e50b8e93ee5d",
       "bytes": 262055
     },
     "ttr-renderer.wasm": {
-      "sha256": "4607d0cb250ab11184e7dfe0d25931b6ff041403efeb38146400c321c6f0fbb2",
-      "bytes": 52220044
+      "sha256": "49cf0d95177eb9ba29968325431e3f457008f2118b6c5a6ca7a397cacb88a286",
+      "bytes": 52228999
     }
   }
 }
